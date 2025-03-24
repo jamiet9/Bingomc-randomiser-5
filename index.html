@@ -2496,8 +2496,8 @@ LIGHTNING_ROD`;
       
     }); // End DOMContentLoaded
     
+document.addEventListener("DOMContentLoaded", function() {
   (function() {
-    // Check for required functions/variables from your main code.
     if (typeof rollRarityCategory !== "function" ||
         typeof fullItemsArray === "undefined" ||
         typeof defaultRarityMapping === "undefined" ||
@@ -2505,20 +2505,16 @@ LIGHTNING_ROD`;
       console.warn("Reroll functionality: Required functions/variables not found. Make sure the main code is loaded first.");
       return;
     }
-
-    // Function to reroll a single cell.
+    // Reroll code continues...
     function rerollCell(cellElem) {
       const revealTime = 500;
       const startTime = Date.now();
-      // Roll for a new rarity category.
       const newCategory = rollRarityCategory();
-      // Filter items that match the rolled rarity.
       const available = fullItemsArray.filter(item => defaultRarityMapping[item] === newCategory);
       const newItem = (available.length > 0)
         ? available[Math.floor(Math.random() * available.length)]
         : fullItemsArray[Math.floor(Math.random() * fullItemsArray.length)];
 
-      // Animate the cell similar to revealCell.
       const interval = setInterval(() => {
         if (Date.now() - startTime >= revealTime) {
           clearInterval(interval);
@@ -2546,25 +2542,21 @@ LIGHTNING_ROD`;
             console.warn("Audio playback error:", e);
           }
         } else {
-          // Display a random item name during the animation.
           cellElem.innerText = fullItemsArray[Math.floor(Math.random() * fullItemsArray.length)];
         }
       }, 50);
     }
 
-    // Listen for clicks on table cells within the bingo card.
     document.addEventListener("click", function(e) {
       const cell = e.target;
       if (cell.tagName === "TD" && cell.closest("#bingoCard")) {
-        // Disable clicking on this cell until the reroll animation is done.
         cell.style.pointerEvents = "none";
         rerollCell(cell);
-        setTimeout(() => {
-          cell.style.pointerEvents = "auto";
-        }, 600);
+        setTimeout(() => { cell.style.pointerEvents = "auto"; }, 600);
       }
     });
   })();
+});
 </script>
 </body>
 </html>
