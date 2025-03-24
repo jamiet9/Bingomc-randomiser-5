@@ -2493,17 +2493,26 @@ LIGHTNING_ROD`;
       
       // Build Modifier Settings UI on load
       buildModifierSettings();
+    }); // End DOMContentLoaded
 
-      document.addEventListener("DOMContentLoaded", function() {
+    <script>
+document.addEventListener("DOMContentLoaded", function() {
+  // Expose required functions/variables if they aren’t already global.
+  if (typeof rollRarityCategory !== "function") {
+    console.warn("rollRarityCategory not found. Make sure you expose it from your main code.");
+  }
+  if (typeof fullItemsArray === "undefined") {
+    console.warn("fullItemsArray not found. Make sure you expose it from your main code.");
+  }
+  if (typeof defaultRarityMapping === "undefined") {
+    console.warn("defaultRarityMapping not found. Make sure you expose it from your main code.");
+  }
+  if (typeof categoryMapping === "undefined") {
+    console.warn("categoryMapping not found. Make sure you expose it from your main code.");
+  }
+  
+  // Reroll functionality assumes that the necessary functions/variables are available.
   (function() {
-    if (typeof rollRarityCategory !== "function" ||
-        typeof fullItemsArray === "undefined" ||
-        typeof defaultRarityMapping === "undefined" ||
-        typeof categoryMapping === "undefined") {
-      console.warn("Reroll functionality: Required functions/variables not found. Make sure the main code is loaded first.");
-      return;
-    }
-    // Reroll code continues...
     function rerollCell(cellElem) {
       const revealTime = 500;
       const startTime = Date.now();
@@ -2545,9 +2554,12 @@ LIGHTNING_ROD`;
       }, 50);
     }
 
+    // Use event delegation to attach click events on the bingo card cells.
     document.addEventListener("click", function(e) {
       const cell = e.target;
       if (cell.tagName === "TD" && cell.closest("#bingoCard")) {
+        // Change the cursor to indicate clickability (optional)
+        cell.style.cursor = "pointer";
         cell.style.pointerEvents = "none";
         rerollCell(cell);
         setTimeout(() => { cell.style.pointerEvents = "auto"; }, 600);
@@ -2555,7 +2567,8 @@ LIGHTNING_ROD`;
     });
   })();
 });
-    }); // End DOMContentLoaded
+</script>
+
 </script>
 </body>
 </html>
