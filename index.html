@@ -1,0 +1,2570 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Minecraft Bingo Card Randomiser</title>
+  <style>
+    /* Basic Reset & Body Styling */
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f0f8ff;
+      color: #333;
+      text-align: center;
+      margin: 20px;
+    }
+    h1 { margin-bottom: 10px; }
+    h2, h3 { margin-bottom: 5px; }
+    /* Top Bar */
+    #topBar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #333;
+      color: #fff;
+      padding: 10px;
+      margin-bottom: 10px;
+    }
+    #topBar button {
+      background: #555;
+      border: none;
+      color: #fff;
+      padding: 5px 10px;
+      cursor: pointer;
+    }
+    #topBar button:hover {
+      background: #777;
+    }
+    /* Settings Panel */
+    #settingsPanel {
+      display: none;
+      max-width: 900px;
+      margin: 10px auto;
+      text-align: left;
+      border: 2px solid #333;
+      background: #fff;
+      padding: 10px;
+    }
+    #settingsPanel h2 { margin-top: 0; }
+    #settingsPanel .settingRow {
+      margin-bottom: 10px;
+    }
+    #settingsPanel label { margin-right: 10px; }
+    #settingsPanel select, #settingsPanel input[type="checkbox"] {
+      margin-right: 10px;
+    }
+    #settingsPanel button {
+      margin-top: 5px;
+      padding: 5px 10px;
+    }
+    /* Container for Modifier Settings */
+    #modifierSettingsList {
+      border: 1px solid #ccc;
+      max-height: 200px;
+      overflow-y: auto;
+      padding: 5px;
+      margin-top: 5px;
+    }
+    .modRow {
+      display: flex;
+      align-items: center;
+      margin-bottom: 5px;
+    }
+    .modRow label {
+      width: 150px;
+      text-align: right;
+      margin-right: 10px;
+    }
+    .modRow select { width: 80px; }
+    /* Display Areas for Modifiers and Effects */
+    #modifiersDisplay, #effectsDisplay {
+      border: 1px solid #ccc;
+      max-height: 100px;
+      overflow-y: auto;
+      padding: 5px;
+      margin-top: 5px;
+    }
+    /* Main Controls */
+    #mainControls {
+      margin-bottom: 20px;
+    }
+    #mainControls button {
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    /* Bingo Card Table */
+    #bingoCard table {
+      margin: 20px auto;
+      border-collapse: collapse;
+      table-layout: fixed; /* prevents jitter */
+      width: auto;
+    }
+    #bingoCard td {
+      border: 2px solid #333;
+      width: 80px;
+      height: 80px;
+      vertical-align: middle;
+      font-size: 12px;
+      text-align: center;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      line-height: 1.2;
+      min-width: 80px;
+      min-height: 80px;
+      transition: background-color 0.4s;
+    }
+    /* Slot Machine Animation */
+    #slotMachine {
+      display: none;
+      margin: 20px auto;
+      width: 320px;
+      border: 2px solid #333;
+      background: #eee;
+      padding: 10px;
+      text-align: center;
+    }
+    .reel {
+      display: inline-block;
+      width: 80px;
+      height: 80px;
+      margin: 0 5px;
+      border: 2px solid #666;
+      font-size: 28px;
+      line-height: 80px;
+      background: #fff;
+    }
+    /* Displays for Card Size & Grade */
+    #cardSizeDisplay, #gradeDisplay {
+      margin-top: 10px;
+      font-weight: bold;
+      font-size: 16px;
+    }
+  </style>
+</head>
+<body>
+  <!-- Top Bar with Title and Settings Button -->
+  <div id="topBar">
+    <div><h1 style="color:#fff;">Minecraft Bingo Card Randomiser</h1></div>
+    <div>
+      <button id="settingsButton">Settings</button>
+    </div>
+  </div>
+  
+  <!-- Settings Panel -->
+  <div id="settingsPanel">
+    <h2>Settings</h2>
+    <!-- Card Size Setting -->
+    <div class="settingRow">
+      <input type="checkbox" id="randomCardSizeCheckbox" checked>
+      <label for="randomCardSizeCheckbox">Randomise Card Size?</label>
+      <select id="manualSizeSelect" style="display: none;">
+        <option value="1">1×1</option>
+        <option value="2">2×2</option>
+        <option value="3">3×3</option>
+        <option value="4">4×4</option>
+        <option value="5" selected>5×5</option>
+        <option value="6">6×6</option>
+        <option value="7">7×7</option>
+        <option value="8">8×8</option>
+        <option value="9">9×9</option>
+        <option value="10">10×10</option>
+      </select>
+    </div>
+    <!-- Modifier Randomisation Toggle -->
+    <div class="settingRow">
+      <label>Modifier Randomisation:</label>
+      <select id="globalModifierToggle">
+        <option value="Yes" selected>Yes</option>
+        <option value="No">No</option>
+      </select>
+    </div>
+    <!-- Modifier Settings List -->
+    <div class="settingRow">
+      <h3>Modifier Settings</h3>
+      <div id="modifierSettingsList"></div>
+    </div>
+    <!-- Effects Randomisation Toggle -->
+    <div class="settingRow">
+      <label for="randomEffectsDropdown">Randomise Effects:</label>
+      <select id="randomEffectsDropdown">
+        <option value="Yes" selected>Yes</option>
+        <option value="No">No</option>
+      </select>
+    </div>
+    <!-- Edit Rarity Section -->
+    <div class="settingRow">
+      <button id="editRaritiesButton">Edit Item Rarities</button>
+    </div>
+    <!-- Rarity Editor (scrollable) -->
+    <div id="rarityList" style="border:1px solid #ccc; max-height:200px; overflow-y:auto; padding:5px;"></div>
+    <button id="saveRaritiesButton">Save Changes</button>
+    <div class="settingRow">
+      <button id="closeSettingsButton">Close Settings</button>
+    </div>
+  </div>
+  
+  <!-- Main Controls -->
+  <div id="mainControls">
+    <button id="generateCardButton">Generate New Card</button>
+  </div>
+  
+  <!-- Display Areas for Card Size, Card, Grade, Modifiers & Effects -->
+  <div id="cardSizeDisplay"></div>
+  <div id="bingoCard"></div>
+  <div id="gradeDisplay"></div>
+  <div id="rolledModifiersDisplay" style="margin-top:10px;"></div>
+  <div id="rolledEffectsDisplay" style="margin-top:10px;"></div>
+  
+  <!-- Slot Machine Animation -->
+  <div id="slotMachine">
+    <div class="reel" id="reel1">?</div>
+    <div class="reel" id="reel2">?</div>
+    <div class="reel" id="reel3">?</div>
+  </div>
+  
+  <!-- Audio Elements with <source> tags -->
+  <audio id="spinSound">
+    <source src="https://www.myinstants.com/media/sounds/spinning-wheel" type="audio/mpeg">
+  </audio>
+  <audio id="revealSound">
+    <source src="https://cdn.pixabay.com/download/audio/2021/08/04/audio_12a42400c4.mp3?filename=retro-game-notification-38284.mp3" type="audio/mpeg">
+  </audio>
+  <audio id="soundSuperRare">
+    <source src="https://www.myinstants.com/media/sounds/challenge_complete_uHsY1YS.mp3" type="audio/mpeg">
+  </audio>
+  <audio id="soundRare">
+    <source src="https://www.myinstants.com/media/sounds/nintendo-game-boy-startup.mp3">
+  </audio>
+  <audio id="soundUncommon">
+    <source src="https://www.myinstants.com/media/sounds/orb.mp3" type="audio/mpeg">
+  </audio>
+  <audio id="soundCommon">
+    <source src="https://www.myinstants.com/media/sounds/minecraft_hit_soundmp3converter.mp3" type="audio/mpeg">
+  </audio>
+  <audio id="soundVeryCommon">
+    <source src="https://www.myinstants.com/media/sounds/hitmarker_lPlclg2.mp3" type="audio/mpeg">
+  </audio>
+  
+  <!-- Main Script -->
+  <script>
+    // Wrap everything in DOMContentLoaded
+    document.addEventListener("DOMContentLoaded", function() {
+
+      /********** GLOBAL CONFIGURATION **********/
+      // Rarity category mapping (numeric values, colors, scores)
+      const categoryMapping = {
+        "Very Common": { value: 2, color: "#FFD700", textColor: "#000000", score: 0.5 },
+        "Common": { value: 1, color: "#FFFFFF", textColor: "#000000", score: 1 },
+        "Uncommon": { value: 0.5, color: "#32CD32", textColor: "#FFFFFF", score: 2 },
+        "Rare": { value: 0.01, color: "#1E90FF", textColor: "#FFFFFF", score: 3 },
+        "Super Rare": { value: 0.001, color: "#8A2BE2", textColor: "#FFFFFF", score: 5 }
+      };
+
+      // Full item list (as provided, with unobtainable items removed)
+      const fullItemsString = `STONE
+GRANITE
+POLISHED_GRANITE
+DIORITE
+POLISHED_DIORITE
+ANDESITE
+POLISHED_ANDESITE
+DEEPSLATE
+COBBLED_DEEPSLATE
+POLISHED_DEEPSLATE
+CALCITE
+DRIPSTONE_BLOCK
+GRASS_BLOCK
+DIRT
+COARSE_DIRT
+PODZOL
+ROOTED_DIRT
+MUD
+COBBLESTONE
+OAK_PLANKS
+SPRUCE_PLANKS
+BIRCH_PLANKS
+JUNGLE_PLANKS
+ACACIA_PLANKS
+CHERRY_PLANKS
+DARK_OAK_PLANKS
+BAMBOO_PLANKS
+BAMBOO_MOSAIC
+OAK_SAPLING
+SPRUCE_SAPLING
+BIRCH_SAPLING
+JUNGLE_SAPLING
+ACACIA_SAPLING
+CHERRY_SAPLING
+DARK_OAK_SAPLING
+MANGROVE_PROPAGULE
+SAND
+SUSPICIOUS_SAND
+SUSPICIOUS_GRAVEL
+RED_SAND
+GRAVEL
+COAL_ORE
+IRON_ORE
+COPPER_ORE
+GOLD_ORE
+REDSTONE_ORE
+EMERALD_ORE
+LAPIS_ORE
+DIAMOND_ORE
+ANCIENT_DEBRIS
+COAL_BLOCK
+RAW_IRON_BLOCK
+RAW_COPPER_BLOCK
+RAW_GOLD_BLOCK
+AMETHYST_BLOCK
+IRON_BLOCK
+COPPER_BLOCK
+GOLD_BLOCK
+DIAMOND_BLOCK
+EXPOSED_COPPER
+WEATHERED_COPPER
+OXIDIZED_COPPER
+CUT_COPPER
+EXPOSED_CUT_COPPER
+WEATHERED_CUT_COPPER
+OXIDIZED_CUT_COPPER
+CUT_COPPER_STAIRS
+EXPOSED_CUT_COPPER_STAIRS
+WEATHERED_CUT_COPPER_STAIRS
+OXIDIZED_CUT_COPPER_STAIRS
+CUT_COPPER_SLAB
+EXPOSED_CUT_COPPER_SLAB
+WEATHERED_CUT_COPPER_SLAB
+OXIDIZED_CUT_COPPER_SLAB
+WAXED_COPPER_BLOCK
+WAXED_EXPOSED_COPPER
+WAXED_WEATHERED_COPPER
+WAXED_OXIDIZED_COPPER
+WAXED_CUT_COPPER
+WAXED_EXPOSED_CUT_COPPER
+WAXED_WEATHERED_CUT_COPPER
+WAXED_OXIDIZED_CUT_COPPER
+WAXED_CUT_COPPER_STAIRS
+WAXED_EXPOSED_CUT_COPPER_STAIRS
+WAXED_WEATHERED_CUT_COPPER_STAIRS
+WAXED_OXIDIZED_CUT_COPPER_STAIRS
+WAXED_CUT_COPPER_SLAB
+WAXED_EXPOSED_CUT_COPPER_SLAB
+WAXED_WEATHERED_CUT_COPPER_SLAB
+WAXED_OXIDIZED_CUT_COPPER_SLAB
+OAK_LOG
+SPRUCE_LOG
+BIRCH_LOG
+JUNGLE_LOG
+ACACIA_LOG
+CHERRY_LOG
+DARK_OAK_LOG
+MANGROVE_LOG
+MANGROVE_ROOTS
+MUDDY_MANGROVE_ROOTS
+BAMBOO_BLOCK
+STRIPPED_OAK_LOG
+STRIPPED_SPRUCE_LOG
+STRIPPED_BIRCH_LOG
+STRIPPED_JUNGLE_LOG
+STRIPPED_ACACIA_LOG
+STRIPPED_CHERRY_LOG
+STRIPPED_DARK_OAK_LOG
+STRIPPED_MANGROVE_LOG
+STRIPPED_OAK_WOOD
+STRIPPED_SPRUCE_WOOD
+STRIPPED_BIRCH_WOOD
+STRIPPED_JUNGLE_WOOD
+STRIPPED_ACACIA_WOOD
+STRIPPED_CHERRY_WOOD
+STRIPPED_DARK_OAK_WOOD
+STRIPPED_MANGROVE_WOOD
+STRIPPED_BAMBOO_BLOCK
+OAK_WOOD
+SPRUCE_WOOD
+BIRCH_WOOD
+JUNGLE_WOOD
+ACACIA_WOOD
+CHERRY_WOOD
+DARK_OAK_WOOD
+MANGROVE_WOOD
+OAK_LEAVES
+SPRUCE_LEAVES
+BIRCH_LEAVES
+JUNGLE_LEAVES
+ACACIA_LEAVES
+CHERRY_LEAVES
+DARK_OAK_LEAVES
+MANGROVE_LEAVES
+AZALEA_LEAVES
+FLOWERING_AZALEA_LEAVES
+SPONGE
+WET_SPONGE
+GLASS
+TINTED_GLASS
+LAPIS_BLOCK
+SANDSTONE
+CHISELED_SANDSTONE
+CUT_SANDSTONE
+COBWEB
+SHORT_GRASS
+FERN
+AZALEA
+FLOWERING_AZALEA
+DEAD_BUSH
+SEAGRASS
+SEA_PICKLE
+WHITE_WOOL
+ORANGE_WOOL
+MAGENTA_WOOL
+LIGHT_BLUE_WOOL
+YELLOW_WOOL
+LIME_WOOL
+PINK_WOOL
+GRAY_WOOL
+LIGHT_GRAY_WOOL
+CYAN_WOOL
+PURPLE_WOOL
+BLUE_WOOL
+BROWN_WOOL
+GREEN_WOOL
+RED_WOOL
+BLACK_WOOL
+DANDELION
+POPPY
+BLUE_ORCHID
+ALLIUM
+AZURE_BLUET
+RED_TULIP
+ORANGE_TULIP
+WHITE_TULIP
+PINK_TULIP
+OXEYE_DAISY
+CORNFLOWER
+LILY_OF_THE_VALLEY
+TORCHFLOWER
+PITCHER_PLANT
+SPORE_BLOSSOM
+BROWN_MUSHROOM
+RED_MUSHROOM
+SUGAR_CANE
+KELP
+MOSS_CARPET
+PINK_PETALS
+MOSS_BLOCK
+BIG_DRIPLEAF
+SMALL_DRIPLEAF
+BAMBOO
+OAK_SLAB
+SPRUCE_SLAB
+BIRCH_SLAB
+JUNGLE_SLAB
+ACACIA_SLAB
+CHERRY_SLAB
+DARK_OAK_SLAB
+MANGROVE_SLAB
+BAMBOO_SLAB
+BAMBOO_MOSAIC_SLAB
+STONE_SLAB
+SMOOTH_STONE_SLAB
+SANDSTONE_SLAB
+CUT_SANDSTONE_SLAB
+PETRIFIED_OAK_SLAB
+COBBLESTONE_SLAB
+BRICK_SLAB
+STONE_BRICK_SLAB
+MUD_BRICK_SLAB
+RED_SANDSTONE_SLAB
+CUT_RED_SANDSTONE_SLAB
+PRISMARINE_SLAB
+PRISMARINE_BRICK_SLAB
+DARK_PRISMARINE_SLAB
+SMOOTH_RED_SANDSTONE
+SMOOTH_SANDSTONE
+SMOOTH_STONE
+BRICKS
+BOOKSHELF
+CHISELED_BOOKSHELF
+DECORATED_POT
+MOSSY_COBBLESTONE
+OBSIDIAN
+TORCH
+CHEST
+CRAFTING_TABLE
+FURNACE
+LADDER
+COBBLESTONE_STAIRS
+SNOW
+ICE
+SNOW_BLOCK
+CACTUS
+CLAY
+JUKEBOX
+OAK_FENCE
+SPRUCE_FENCE
+BIRCH_FENCE
+JUNGLE_FENCE
+ACACIA_FENCE
+CHERRY_FENCE
+DARK_OAK_FENCE
+MANGROVE_FENCE
+BAMBOO_FENCE
+PUMPKIN
+CARVED_PUMPKIN
+JACK_O_LANTERN
+STONE_BRICKS
+MOSSY_STONE_BRICKS
+CRACKED_STONE_BRICKS
+CHISELED_STONE_BRICKS
+PACKED_MUD
+MUD_BRICKS
+DEEPSLATE_BRICKS
+CRACKED_DEEPSLATE_BRICKS
+DEEPSLATE_TILES
+CRACKED_DEEPSLATE_TILES
+CHISELED_DEEPSLATE
+REINFORCED_DEEPSLATE
+IRON_BARS
+CHAIN
+GLASS_PANE
+MELON
+VINE
+GLOW_LICHEN
+BRICK_STAIRS
+STONE_BRICK_STAIRS
+MUD_BRICK_STAIRS
+LILY_PAD
+ENCHANTING_TABLE
+SANDSTONE_STAIRS
+EMERALD_BLOCK
+OAK_STAIRS
+SPRUCE_STAIRS
+BIRCH_STAIRS
+JUNGLE_STAIRS
+ACACIA_STAIRS
+CHERRY_STAIRS
+DARK_OAK_STAIRS
+MANGROVE_STAIRS
+BAMBOO_STAIRS
+BAMBOO_MOSAIC_STAIRS
+COBBLESTONE_WALL
+MOSSY_COBBLESTONE_WALL
+BRICK_WALL
+PRISMARINE_WALL
+RED_SANDSTONE_WALL
+MOSSY_STONE_BRICK_WALL
+GRANITE_WALL
+STONE_BRICK_WALL
+MUD_BRICK_WALL
+ANDESITE_WALL
+SANDSTONE_WALL
+DIORITE_WALL
+COBBLED_DEEPSLATE_WALL
+POLISHED_DEEPSLATE_WALL
+DEEPSLATE_BRICK_WALL
+DEEPSLATE_TILE_WALL
+ANVIL
+HAY_BLOCK
+WHITE_CARPET
+ORANGE_CARPET
+MAGENTA_CARPET
+LIGHT_BLUE_CARPET
+YELLOW_CARPET
+LIME_CARPET
+PINK_CARPET
+GRAY_CARPET
+LIGHT_GRAY_CARPET
+CYAN_CARPET
+PURPLE_CARPET
+BLUE_CARPET
+BROWN_CARPET
+GREEN_CARPET
+RED_CARPET
+BLACK_CARPET
+PACKED_ICE
+SUNFLOWER
+LILAC
+ROSE_BUSH
+PEONY
+TALL_GRASS
+LARGE_FERN
+WHITE_STAINED_GLASS
+ORANGE_STAINED_GLASS
+MAGENTA_STAINED_GLASS
+LIGHT_BLUE_STAINED_GLASS
+YELLOW_STAINED_GLASS
+LIME_STAINED_GLASS
+PINK_STAINED_GLASS
+GRAY_STAINED_GLASS
+LIGHT_GRAY_STAINED_GLASS
+CYAN_STAINED_GLASS
+PURPLE_STAINED_GLASS
+BLUE_STAINED_GLASS
+BROWN_STAINED_GLASS
+GREEN_STAINED_GLASS
+RED_STAINED_GLASS
+BLACK_STAINED_GLASS
+WHITE_STAINED_GLASS_PANE
+ORANGE_STAINED_GLASS_PANE
+MAGENTA_STAINED_GLASS_PANE
+LIGHT_BLUE_STAINED_GLASS_PANE
+YELLOW_STAINED_GLASS_PANE
+LIME_STAINED_GLASS_PANE
+PINK_STAINED_GLASS_PANE
+GRAY_STAINED_GLASS_PANE
+LIGHT_GRAY_STAINED_GLASS_PANE
+CYAN_STAINED_GLASS_PANE
+PURPLE_STAINED_GLASS_PANE
+BLUE_STAINED_GLASS_PANE
+BROWN_STAINED_GLASS_PANE
+GREEN_STAINED_GLASS_PANE
+RED_STAINED_GLASS_PANE
+BLACK_STAINED_GLASS_PANE
+PRISMARINE
+PRISMARINE_BRICKS
+DARK_PRISMARINE
+PRISMARINE_STAIRS
+PRISMARINE_BRICK_STAIRS
+DARK_PRISMARINE_STAIRS
+SEA_LANTERN
+RED_SANDSTONE
+CHISELED_RED_SANDSTONE
+CUT_RED_SANDSTONE
+RED_SANDSTONE_STAIRS
+MAGMA_BLOCK
+WHITE_CONCRETE
+ORANGE_CONCRETE
+MAGENTA_CONCRETE
+LIGHT_BLUE_CONCRETE
+YELLOW_CONCRETE
+LIME_CONCRETE
+PINK_CONCRETE
+GRAY_CONCRETE
+LIGHT_GRAY_CONCRETE
+CYAN_CONCRETE
+PURPLE_CONCRETE
+BLUE_CONCRETE
+BROWN_CONCRETE
+GREEN_CONCRETE
+RED_CONCRETE
+BLACK_CONCRETE
+WHITE_CONCRETE_POWDER
+ORANGE_CONCRETE_POWDER
+MAGENTA_CONCRETE_POWDER
+LIGHT_BLUE_CONCRETE_POWDER
+YELLOW_CONCRETE_POWDER
+LIME_CONCRETE_POWDER
+PINK_CONCRETE_POWDER
+GRAY_CONCRETE_POWDER
+LIGHT_GRAY_CONCRETE_POWDER
+CYAN_CONCRETE_POWDER
+PURPLE_CONCRETE_POWDER
+BLUE_CONCRETE_POWDER
+BROWN_CONCRETE_POWDER
+GREEN_CONCRETE_POWDER
+RED_CONCRETE_POWDER
+BLACK_CONCRETE_POWDER
+CONDUIT
+POLISHED_GRANITE_STAIRS
+SMOOTH_RED_SANDSTONE_STAIRS
+MOSSY_STONE_BRICK_STAIRS
+POLISHED_DIORITE_STAIRS
+MOSSY_COBBLESTONE_STAIRS
+STONE_STAIRS
+SMOOTH_SANDSTONE_STAIRS
+GRANITE_STAIRS
+ANDESITE_STAIRS
+POLISHED_ANDESITE_STAIRS
+DIORITE_STAIRS
+COBBLED_DEEPSLATE_STAIRS
+POLISHED_DEEPSLATE_STAIRS
+DEEPSLATE_BRICK_STAIRS
+DEEPSLATE_TILE_STAIRS
+POLISHED_GRANITE_SLAB
+SMOOTH_RED_SANDSTONE_SLAB
+MOSSY_STONE_BRICK_SLAB
+POLISHED_DIORITE_SLAB
+MOSSY_COBBLESTONE_SLAB
+SMOOTH_SANDSTONE_SLAB
+GRANITE_SLAB
+ANDESITE_SLAB
+POLISHED_ANDESITE_SLAB
+DIORITE_SLAB
+COBBLED_DEEPSLATE_SLAB
+POLISHED_DEEPSLATE_SLAB
+DEEPSLATE_BRICK_SLAB
+DEEPSLATE_TILE_SLAB
+SCAFFOLDING
+REDSTONE
+REDSTONE_TORCH
+REDSTONE_BLOCK
+REPEATER
+COMPARATOR
+PISTON
+STICKY_PISTON
+SLIME_BLOCK
+HONEY_BLOCK
+OBSERVER
+HOPPER
+DISPENSER
+DROPPER
+LECTERN
+TARGET
+LEVER
+DAYLIGHT_DETECTOR
+TRIPWIRE_HOOK
+TRAPPED_CHEST
+TNT
+NOTE_BLOCK
+STONE_BUTTON
+OAK_BUTTON
+SPRUCE_BUTTON
+BIRCH_BUTTON
+JUNGLE_BUTTON
+ACACIA_BUTTON
+CHERRY_BUTTON
+DARK_OAK_BUTTON
+MANGROVE_BUTTON
+BAMBOO_BUTTON
+STONE_PRESSURE_PLATE
+LIGHT_WEIGHTED_PRESSURE_PLATE
+HEAVY_WEIGHTED_PRESSURE_PLATE
+OAK_PRESSURE_PLATE
+SPRUCE_PRESSURE_PLATE
+BIRCH_PRESSURE_PLATE
+JUNGLE_PRESSURE_PLATE
+ACACIA_PRESSURE_PLATE
+CHERRY_PRESSURE_PLATE
+DARK_OAK_PRESSURE_PLATE
+MANGROVE_PRESSURE_PLATE
+BAMBOO_PRESSURE_PLATE
+IRON_DOOR
+OAK_DOOR
+SPRUCE_DOOR
+BIRCH_DOOR
+JUNGLE_DOOR
+ACACIA_DOOR
+CHERRY_DOOR
+DARK_OAK_DOOR
+MANGROVE_DOOR
+BAMBOO_DOOR
+COPPER_DOOR
+EXPOSED_COPPER_DOOR
+WEATHERED_COPPER_DOOR
+OXIDIZED_COPPER_DOOR
+WAXED_COPPER_DOOR
+WAXED_EXPOSED_COPPER_DOOR
+WAXED_WEATHERED_COPPER_DOOR
+WAXED_OXIDIZED_COPPER_DOOR
+IRON_TRAPDOOR
+OAK_TRAPDOOR
+SPRUCE_TRAPDOOR
+BIRCH_TRAPDOOR
+JUNGLE_TRAPDOOR
+ACACIA_TRAPDOOR
+CHERRY_TRAPDOOR
+DARK_OAK_TRAPDOOR
+MANGROVE_TRAPDOOR
+BAMBOO_TRAPDOOR
+COPPER_TRAPDOOR
+EXPOSED_COPPER_TRAPDOOR
+WEATHERED_COPPER_TRAPDOOR
+OXIDIZED_COPPER_TRAPDOOR
+WAXED_COPPER_TRAPDOOR
+WAXED_EXPOSED_COPPER_TRAPDOOR
+WAXED_WEATHERED_COPPER_TRAPDOOR
+WAXED_OXIDIZED_COPPER_TRAPDOOR
+OAK_FENCE_GATE
+SPRUCE_FENCE_GATE
+BIRCH_FENCE_GATE
+JUNGLE_FENCE_GATE
+ACACIA_FENCE_GATE
+CHERRY_FENCE_GATE
+DARK_OAK_FENCE_GATE
+MANGROVE_FENCE_GATE
+BAMBOO_FENCE_GATE
+POWERED_RAIL
+DETECTOR_RAIL
+RAIL
+ACTIVATOR_RAIL
+SADDLE
+MINECART
+CHEST_MINECART
+FURNACE_MINECART
+TNT_MINECART
+HOPPER_MINECART
+CARROT_ON_A_STICK
+OAK_BOAT
+OAK_CHEST_BOAT
+SPRUCE_BOAT
+SPRUCE_CHEST_BOAT
+BIRCH_BOAT
+BIRCH_CHEST_BOAT
+JUNGLE_BOAT
+JUNGLE_CHEST_BOAT
+ACACIA_BOAT
+ACACIA_CHEST_BOAT
+CHERRY_BOAT
+CHERRY_CHEST_BOAT
+DARK_OAK_BOAT
+DARK_OAK_CHEST_BOAT
+MANGROVE_BOAT
+MANGROVE_CHEST_BOAT
+BAMBOO_RAFT
+BAMBOO_CHEST_RAFT
+TURTLE_HELMET
+FLINT_AND_STEEL
+APPLE
+BOW
+ARROW
+COAL
+CHARCOAL
+DIAMOND
+EMERALD
+LAPIS_LAZULI
+AMETHYST_SHARD
+RAW_IRON
+IRON_INGOT
+RAW_COPPER
+COPPER_INGOT
+RAW_GOLD
+GOLD_INGOT
+WOODEN_SWORD
+WOODEN_SHOVEL
+WOODEN_PICKAXE
+WOODEN_AXE
+WOODEN_HOE
+STONE_SWORD
+STONE_SHOVEL
+STONE_PICKAXE
+STONE_AXE
+STONE_HOE
+GOLDEN_SWORD
+GOLDEN_SHOVEL
+GOLDEN_PICKAXE
+GOLDEN_AXE
+GOLDEN_HOE
+IRON_SWORD
+IRON_SHOVEL
+IRON_PICKAXE
+IRON_AXE
+IRON_HOE
+DIAMOND_SWORD
+DIAMOND_SHOVEL
+DIAMOND_PICKAXE
+DIAMOND_AXE
+DIAMOND_HOE
+STICK
+BOWL
+STRING
+FEATHER
+GUNPOWDER
+WHEAT_SEEDS
+WHEAT
+BREAD
+LEATHER_HELMET
+LEATHER_CHESTPLATE
+LEATHER_LEGGINGS
+LEATHER_BOOTS
+CHAINMAIL_HELMET
+CHAINMAIL_CHESTPLATE
+CHAINMAIL_LEGGINGS
+CHAINMAIL_BOOTS
+IRON_HELMET
+IRON_CHESTPLATE
+IRON_LEGGINGS
+IRON_BOOTS
+DIAMOND_HELMET
+DIAMOND_CHESTPLATE
+DIAMOND_LEGGINGS
+DIAMOND_BOOTS
+GOLDEN_HELMET
+GOLDEN_CHESTPLATE
+GOLDEN_LEGGINGS
+GOLDEN_BOOTS
+FLINT
+PORKCHOP
+COOKED_PORKCHOP
+PAINTING
+GOLDEN_APPLE
+ENCHANTED_GOLDEN_APPLE
+OAK_SIGN
+SPRUCE_SIGN
+BIRCH_SIGN
+JUNGLE_SIGN
+ACACIA_SIGN
+CHERRY_SIGN
+DARK_OAK_SIGN
+MANGROVE_SIGN
+BAMBOO_SIGN
+OAK_HANGING_SIGN
+SPRUCE_HANGING_SIGN
+BIRCH_HANGING_SIGN
+JUNGLE_HANGING_SIGN
+ACACIA_HANGING_SIGN
+CHERRY_HANGING_SIGN
+DARK_OAK_HANGING_SIGN
+MANGROVE_HANGING_SIGN
+BAMBOO_HANGING_SIGN
+BUCKET
+WATER_BUCKET
+LAVA_BUCKET
+POWDER_SNOW_BUCKET
+SNOWBALL
+LEATHER
+MILK_BUCKET
+PUFFERFISH_BUCKET
+SALMON_BUCKET
+COD_BUCKET
+TROPICAL_FISH_BUCKET
+AXOLOTL_BUCKET
+TADPOLE_BUCKET
+BRICK
+CLAY_BALL
+DRIED_KELP_BLOCK
+PAPER
+BOOK
+SLIME_BALL
+EGG
+COMPASS
+FISHING_ROD
+CLOCK
+SPYGLASS
+GLOWSTONE_DUST
+COD
+SALMON
+TROPICAL_FISH
+PUFFERFISH
+COOKED_COD
+COOKED_SALMON
+INK_SAC
+GLOW_INK_SAC
+COCOA_BEANS
+WHITE_DYE
+ORANGE_DYE
+MAGENTA_DYE
+LIGHT_BLUE_DYE
+YELLOW_DYE
+LIME_DYE
+PINK_DYE
+GRAY_DYE
+LIGHT_GRAY_DYE
+CYAN_DYE
+PURPLE_DYE
+BLUE_DYE
+BROWN_DYE
+GREEN_DYE
+RED_DYE
+BLACK_DYE
+BONE_MEAL
+BONE
+SUGAR
+CAKE
+WHITE_BED
+ORANGE_BED
+MAGENTA_BED
+LIGHT_BLUE_BED
+YELLOW_BED
+LIME_BED
+PINK_BED
+GRAY_BED
+LIGHT_GRAY_BED
+CYAN_BED
+PURPLE_BED
+BLUE_BED
+BROWN_BED
+GREEN_BED
+RED_BED
+BLACK_BED
+COOKIE
+SHEARS
+MELON_SLICE
+DRIED_KELP
+PUMPKIN_SEEDS
+MELON_SEEDS
+BEEF
+COOKED_BEEF
+CHICKEN
+COOKED_CHICKEN
+ROTTEN_FLESH
+ENDER_PEARL
+GOLD_NUGGET
+GLASS_BOTTLE
+SPIDER_EYE
+FERMENTED_SPIDER_EYE
+BREWING_STAND
+CAULDRON
+GLISTERING_MELON_SLICE
+EXPERIENCE_BOTTLE
+FIRE_CHARGE
+WRITABLE_BOOK
+ITEM_FRAME
+GLOW_ITEM_FRAME
+FLOWER_POT
+CARROT
+POTATO
+BAKED_POTATO
+POISONOUS_POTATO
+GOLDEN_CARROT
+PUMPKIN_PIE
+FIREWORK_ROCKET
+PRISMARINE_SHARD
+PRISMARINE_CRYSTALS
+RABBIT
+COOKED_RABBIT
+RABBIT_STEW
+RABBIT_FOOT
+RABBIT_HIDE
+ARMOR_STAND
+NAME_TAG
+MUTTON
+COOKED_MUTTON
+BEETROOT
+BEETROOT_SEEDS
+BEETROOT_SOUP
+SPLASH_POTION
+SHIELD
+IRON_NUGGET
+TRIDENT
+NAUTILUS_SHELL
+HEART_OF_THE_SEA
+CROSSBOW
+SUSPICIOUS_STEW
+LOOM
+COMPOSTER
+BARREL
+SMOKER
+BLAST_FURNACE
+CARTOGRAPHY_TABLE
+FLETCHING_TABLE
+GRINDSTONE
+SMITHING_TABLE
+STONECUTTER
+BELL
+LANTERN
+SWEET_BERRIES
+GLOW_BERRIES
+CAMPFIRE
+HONEYCOMB
+BEEHIVE
+HONEY_BOTTLE
+HONEYCOMB_BLOCK
+CRYING_OBSIDIAN
+CANDLE
+WHITE_CANDLE
+ORANGE_CANDLE
+MAGENTA_CANDLE
+LIGHT_BLUE_CANDLE
+YELLOW_CANDLE
+LIME_CANDLE
+PINK_CANDLE
+GRAY_CANDLE
+LIGHT_GRAY_CANDLE
+CYAN_CANDLE
+PURPLE_CANDLE
+BLUE_CANDLE
+BROWN_CANDLE
+GREEN_CANDLE
+RED_CANDLE
+BLACK_CANDLE
+POINTED_DRIPSTONE
+BRUSH
+COPPER_GRATE
+EXPOSED_COPPER_GRATE
+WEATHERED_COPPER_GRATE
+OXIDIZED_COPPER_GRATE
+WAXED_COPPER_GRATE
+WAXED_EXPOSED_COPPER_GRATE
+WAXED_WEATHERED_COPPER_GRATE
+WAXED_OXIDIZED_COPPER_GRATE
+WHITE_TERRACOTTA
+ORANGE_TERRACOTTA
+MAGENTA_TERRACOTTA
+LIGHT_BLUE_TERRACOTTA
+YELLOW_TERRACOTTA
+LIME_TERRACOTTA
+PINK_TERRACOTTA
+GRAY_TERRACOTTA
+LIGHT_GRAY_TERRACOTTA
+CYAN_TERRACOTTA
+PURPLE_TERRACOTTA
+BLUE_TERRACOTTA
+BROWN_TERRACOTTA
+GREEN_TERRACOTTA
+RED_TERRACOTTA
+BLACK_TERRACOTTA
+NETHERITE_BLOCK
+CRIMSON_PLANKS
+WARPED_PLANKS
+CRIMSON_STEM
+WARPED_STEM
+STRIPPED_CRIMSON_STEM
+STRIPPED_WARPED_STEM
+NETHER_GOLD_ORE
+NETHER_QUARTZ_ORE
+CRIMSON_FUNGUS
+WARPED_FUNGUS
+CRIMSON_ROOTS
+WARPED_ROOTS
+NETHER_SPROUTS
+CRIMSON_SLAB
+WARPED_SLAB
+SMOOTH_QUARTZ
+NETHERRACK
+SOUL_SAND
+GLOWSTONE
+NETHER_BRICKS
+CRACKED_NETHER_BRICKS
+CHISELED_NETHER_BRICKS
+NETHER_BRICK_FENCE
+NETHER_BRICK_STAIRS
+CRIMSON_STAIRS
+WARPED_STAIRS
+NETHER_BRICK_WALL
+CHISELED_QUARTZ_BLOCK
+QUARTZ_BLOCK
+QUARTZ_BRICKS
+QUARTZ_PILLAR
+QUARTZ_STAIRS
+NETHER_WART_BLOCK
+WARPED_WART_BLOCK
+RED_NETHER_BRICKS
+BONE_BLOCK
+SMOOTH_QUARTZ_STAIRS
+CRIMSON_DOOR
+WARPED_DOOR
+CRIMSON_TRAPDOOR
+WARPED_TRAPDOOR
+NETHERITE_INGOT
+NETHERITE_SCRAP
+QUARTZ
+NETHERITE_SWORD
+NETHERITE_SHOVEL
+NETHERITE_PICKAXE
+NETHERITE_AXE
+NETHERITE_HOE
+NETHERITE_HELMET
+NETHERITE_CHESTPLATE
+NETHERITE_LEGGINGS
+NETHERITE_BOOTS
+BLAZE_ROD
+GHAST_TEAR
+NETHER_WART
+BLAZE_POWDER
+MAGMA_CREAM
+BASALT
+SMOOTH_BASALT
+POLISHED_BASALT
+BLACKSTONE
+POLISHED_BLACKSTONE
+END_STONE
+END_STONE_BRICKS
+CHORUS_FRUIT
+PURPUR_BLOCK
+PURPUR_PILLAR
+DRAGON_HEAD
+DRAGON_EGG
+ELYTRA
+REDSTONE_LAMP
+LIGHTNING_ROD`;
+      
+      let fullItemsArray = fullItemsString.split("\n").map(s => s.trim()).filter(s => s !== "" && s !== "PETRIFIED_OAK_SLAB");
+      
+      // DEFAULT RARITY ASSIGNMENTS (item‑by‑item, based on survival difficulty)
+      const defaultRarityMapping = {
+        "STONE": "Very Common",
+        "GRANITE": "Very Common",
+        "POLISHED_GRANITE": "Very Common",
+        "DIORITE": "Very Common",
+        "POLISHED_DIORITE": "Very Common",
+        "ANDESITE": "Very Common",
+        "POLISHED_ANDESITE": "Very Common",
+        "DEEPSLATE": "Common",
+        "COBBLED_DEEPSLATE": "Common",
+        "POLISHED_DEEPSLATE": "Common",
+        "CALCITE": "Uncommon",
+        "DRIPSTONE_BLOCK": "Uncommon",
+        "GRASS_BLOCK": "Rare",         // Requires silk touch
+        "DIRT": "Very Common",
+        "COARSE_DIRT": "Common",
+        "PODZOL": "Rare",
+        "ROOTED_DIRT": "Uncommon",
+        "MUD": "Common",
+        "COBBLESTONE": "Very Common",
+        "OAK_PLANKS": "Very Common",
+        "SPRUCE_PLANKS": "Very Common",
+        "BIRCH_PLANKS": "Very Common",
+        "JUNGLE_PLANKS": "Very Common",
+        "ACACIA_PLANKS": "Very Common",
+        "CHERRY_PLANKS": "Common",
+        "DARK_OAK_PLANKS": "Very Common",
+        "BAMBOO_PLANKS": "Common",
+        "BAMBOO_MOSAIC": "uncommon",
+        "OAK_SAPLING": "Very Common",
+        "SPRUCE_SAPLING": "Very Common",
+        "BIRCH_SAPLING": "Very Common",
+        "JUNGLE_SAPLING": "Very Common",
+        "ACACIA_SAPLING": "Very Common",
+        "CHERRY_SAPLING": "common",
+        "DARK_OAK_SAPLING": "Very Common",
+        "MANGROVE_PROPAGULE": "Super Rare",
+        "SAND": "Very Common",
+        "RED_SAND": "Very Common",
+        "GRAVEL": "Very Common",
+        "COAL_ORE": "Rare",
+        "IRON_ORE": "Rare",
+        "COPPER_ORE": "Rare",
+        "GOLD_ORE": "Rare",
+        "REDSTONE_ORE": "Rare",
+        "EMERALD_ORE": "Rare",
+        "LAPIS_ORE": "Rare",
+        "DIAMOND_ORE": "Rare",
+        "ANCIENT_DEBRIS": "Rare",
+        "COAL_BLOCK": "Common",
+        "RAW_IRON_BLOCK": "Common",
+        "RAW_COPPER_BLOCK": "Common",
+        "RAW_GOLD_BLOCK": "Common",
+        "AMETHYST_BLOCK": "Rare",
+        "IRON_BLOCK": "Common",
+        "COPPER_BLOCK": "Common",
+        "GOLD_BLOCK": "Uncommon",
+        "DIAMOND_BLOCK": "Uncommon",
+        "EXPOSED_COPPER": "Rare",
+        "WEATHERED_COPPER": "Super Rare",
+        "OXIDIZED_COPPER": "Super Rare",
+        "CUT_COPPER": "Uncommon",
+        "EXPOSED_CUT_COPPER": "Rare",
+        "WEATHERED_CUT_COPPER": "Super Rare",
+        "OXIDIZED_CUT_COPPER": "Super Rare",
+        "CUT_COPPER_STAIRS": "Uncommon",
+        "EXPOSED_CUT_COPPER_STAIRS": "Rare",
+        "WEATHERED_CUT_COPPER_STAIRS": "Super Rare",
+        "OXIDIZED_CUT_COPPER_STAIRS": "Super Rare",
+        "CUT_COPPER_SLAB": "Uncommon",
+        "EXPOSED_CUT_COPPER_SLAB": "Rare",
+        "WEATHERED_CUT_COPPER_SLAB": "Super Rare",
+        "OXIDIZED_CUT_COPPER_SLAB": "Super Rare",
+        "WAXED_COPPER_BLOCK": "Rare",
+        "WAXED_EXPOSED_COPPER": "Super Rare",
+        "WAXED_WEATHERED_COPPER": "Super Rare",
+        "WAXED_OXIDIZED_COPPER": "Super Rare",
+        "WAXED_CUT_COPPER": "Rare",
+        "WAXED_EXPOSED_CUT_COPPER": "Super Rare",
+        "WAXED_WEATHERED_CUT_COPPER": "Super Rare",
+        "WAXED_OXIDIZED_CUT_COPPER": "Super Rare",
+        "WAXED_CUT_COPPER_STAIRS": "Rare",
+        "WAXED_EXPOSED_CUT_COPPER_STAIRS": "Super Rare",
+        "WAXED_WEATHERED_CUT_COPPER_STAIRS": "Super Rare",
+        "WAXED_OXIDIZED_CUT_COPPER_STAIRS": "Super Rare",
+        "WAXED_CUT_COPPER_SLAB": "Rare",
+        "WAXED_EXPOSED_CUT_COPPER_SLAB": "Super Rare",
+        "WAXED_WEATHERED_CUT_COPPER_SLAB": "Super Rare",
+        "WAXED_OXIDIZED_CUT_COPPER_SLAB": "Super Rare",
+        "OAK_LOG": "Very Common",
+        "SPRUCE_LOG": "Very Common",
+        "BIRCH_LOG": "Very Common",
+        "JUNGLE_LOG": "Very Common",
+        "ACACIA_LOG": "Very Common",
+        "CHERRY_LOG": "Common",
+        "DARK_OAK_LOG": "Very Common",
+        "MANGROVE_LOG": "Common",
+        "MANGROVE_ROOTS": "Uncommon",
+        "MUDDY_MANGROVE_ROOTS": "Uncommon",
+        "BAMBOO_BLOCK": "Common",
+        "STRIPPED_OAK_LOG": "Very Common",
+        "STRIPPED_SPRUCE_LOG": "Very Common",
+        "STRIPPED_BIRCH_LOG": "Very Common",
+        "STRIPPED_JUNGLE_LOG": "Very Common",
+        "STRIPPED_ACACIA_LOG": "Very Common",
+        "STRIPPED_CHERRY_LOG": "Common",
+        "STRIPPED_DARK_OAK_LOG": "Very Common",
+        "STRIPPED_MANGROVE_LOG": "Common",
+        "STRIPPED_OAK_WOOD": "Very Common",
+        "STRIPPED_SPRUCE_WOOD": "Very Common",
+        "STRIPPED_BIRCH_WOOD": "Very Common",
+        "STRIPPED_JUNGLE_WOOD": "Very Common",
+        "STRIPPED_ACACIA_WOOD": "Very Common",
+        "STRIPPED_CHERRY_WOOD": "Common",
+        "STRIPPED_DARK_OAK_WOOD": "Very Common",
+        "STRIPPED_MANGROVE_WOOD": "Common",
+        "STRIPPED_BAMBOO_BLOCK": "Common",
+        "OAK_WOOD": "Very Common",
+        "SPRUCE_WOOD": "Very Common",
+        "BIRCH_WOOD": "Very Common",
+        "JUNGLE_WOOD": "Very Common",
+        "ACACIA_WOOD": "Very Common",
+        "CHERRY_WOOD": "Common",
+        "DARK_OAK_WOOD": "Very Common",
+        "MANGROVE_WOOD": "Common",
+        "OAK_LEAVES": "Very Common",
+        "SPRUCE_LEAVES": "Very Common",
+        "BIRCH_LEAVES": "Very Common",
+        "JUNGLE_LEAVES": "Very Common",
+        "ACACIA_LEAVES": "Very Common",
+        "CHERRY_LEAVES": "Common",
+        "DARK_OAK_LEAVES": "Very Common",
+        "MANGROVE_LEAVES": "Common",
+        "AZALEA_LEAVES": "Very Common",
+        "FLOWERING_AZALEA_LEAVES": "Uncommon",
+        "SPONGE": "Rare",
+        "WET_SPONGE": "Rare",
+        "GLASS": "Very Common",
+        "TINTED_GLASS": "Rare",
+        "LAPIS_BLOCK": "Common",
+        "SANDSTONE": "Very Common",
+        "CHISELED_SANDSTONE": "Common",
+        "CUT_SANDSTONE": "Common",
+        "COBWEB": "Uncommon",
+        "SHORT_GRASS": "Common",
+        "FERN": "Uncommon",
+        "AZALEA": "Uncommon",
+        "FLOWERING_AZALEA": "Uncommon",
+        "DEAD_BUSH": "Uncommon",
+        "SEAGRASS": "Common",
+        "SEA_PICKLE": "Uncommon",
+        "WHITE_WOOL": "Very Common",
+        "ORANGE_WOOL": "Very Common",
+        "MAGENTA_WOOL": "Very Common",
+        "LIGHT_BLUE_WOOL": "Very Common",
+        "YELLOW_WOOL": "Very Common",
+        "LIME_WOOL": "Very Common",
+        "PINK_WOOL": "Very Common",
+        "GRAY_WOOL": "Very Common",
+        "LIGHT_GRAY_WOOL": "Very Common",
+        "CYAN_WOOL": "Very Common",
+        "PURPLE_WOOL": "Very Common",
+        "BLUE_WOOL": "Very Common",
+        "BROWN_WOOL": "Very Common",
+        "GREEN_WOOL": "Very Common",
+        "RED_WOOL": "Very Common",
+        "BLACK_WOOL": "Very Common",
+        "DANDELION": "Very Common",
+        "POPPY": "Very Common",
+        "BLUE_ORCHID": "Uncommon",
+        "ALLIUM": "Uncommon",
+        "AZURE_BLUET": "Uncommon",
+        "RED_TULIP": "Uncommon",
+        "ORANGE_TULIP": "Uncommon",
+        "WHITE_TULIP": "Uncommon",
+        "PINK_TULIP": "Uncommon",
+        "OXEYE_DAISY": "Uncommon",
+        "CORNFLOWER": "Very Common",
+        "LILY_OF_THE_VALLEY": "Uncommon",
+        "TORCHFLOWER": "Super Rare",
+        "PITCHER_PLANT": "Super Rare",
+        "SPORE_BLOSSOM": "Rare",
+        "BROWN_MUSHROOM": "Uncommon",
+        "RED_MUSHROOM": "Uncommon",
+        "SUGAR_CANE": "Very Common",
+        "KELP": "Very Common",
+        "MOSS_CARPET": "Uncommon",
+        "PINK_PETALS": "Uncommon",
+        "MOSS_BLOCK": "Uncommon",
+        "BIG_DRIPLEAF": "Uncommon",
+        "SMALL_DRIPLEAF": "Uncommon",
+        "BAMBOO": "Common",
+        "OAK_SLAB": "Very Common",
+        "SPRUCE_SLAB": "Very Common",
+        "BIRCH_SLAB": "Very Common",
+        "JUNGLE_SLAB": "Very Common",
+        "ACACIA_SLAB": "Very Common",
+        "CHERRY_SLAB": "Common",
+        "DARK_OAK_SLAB": "Very Common",
+        "MANGROVE_SLAB": "Common",
+        "BAMBOO_SLAB": "Common",
+        "BAMBOO_MOSAIC_SLAB": "Common",
+        "STONE_SLAB": "Very Common",
+        "SMOOTH_STONE_SLAB": "Very Common",
+        "SANDSTONE_SLAB": "Very Common",
+        "CUT_SANDSTONE_SLAB": "Common",
+        "PETRIFIED_OAK_SLAB": "REMOVED",
+        "COBBLESTONE_SLAB": "Very Common",
+        "BRICK_SLAB": "Common",
+        "STONE_BRICK_SLAB": "Common",
+        "MUD_BRICK_SLAB": "Common",
+        "RED_SANDSTONE_SLAB": "Common",
+        "CUT_RED_SANDSTONE_SLAB": "Common",
+        "PRISMARINE_SLAB": "Rare",
+        "PRISMARINE_BRICK_SLAB": "Rare",
+        "DARK_PRISMARINE_SLAB": "Rare",
+        "SMOOTH_RED_SANDSTONE": "Common",
+        "SMOOTH_SANDSTONE": "Common",
+        "SMOOTH_STONE": "Very Common",
+        "BRICKS": "Very Common",
+        "BOOKSHELF": "Common",
+        "CHISELED_BOOKSHELF": "Common",
+        "DECORATED_POT": "Common",
+        "MOSSY_COBBLESTONE": "Uncommon",
+        "OBSIDIAN": "Uncommon",
+        "TORCH": "Very Common",
+        "CHEST": "Very Common",
+        "CRAFTING_TABLE": "Very Common",
+        "FURNACE": "Very Common",
+        "LADDER": "Very Common",
+        "COBBLESTONE_STAIRS": "Very Common",
+        "SNOW": "Common",
+        "ICE": "Rare",
+        "SNOW_BLOCK": "Common",
+        "CACTUS": "Common",
+        "CLAY": "Very Common",
+        "JUKEBOX": "Uncommon",
+        "OAK_FENCE": "Very Common",
+        "SPRUCE_FENCE": "Very Common",
+        "BIRCH_FENCE": "Very Common",
+        "JUNGLE_FENCE": "Very Common",
+        "ACACIA_FENCE": "Very Common",
+        "CHERRY_FENCE": "Common",
+        "DARK_OAK_FENCE": "Very Common",
+        "MANGROVE_FENCE": "Common",
+        "BAMBOO_FENCE": "Common",
+        "PUMPKIN": "Uncommon",
+        "CARVED_PUMPKIN": "Uncommon",
+        "JACK_O_LANTERN": "Uncommon",
+        "STONE_BRICKS": "Common",
+        "MOSSY_STONE_BRICKS": "Uncommon",
+        "CRACKED_STONE_BRICKS": "Common",
+        "CHISELED_STONE_BRICKS": "Common",
+        "PACKED_MUD": "Uncommon",
+        "MUD_BRICKS": "Uncommon",
+        "DEEPSLATE_BRICKS": "Common",
+        "CRACKED_DEEPSLATE_BRICKS": "Common",
+        "DEEPSLATE_TILES": "Common",
+        "CRACKED_DEEPSLATE_TILES": "Common",
+        "CHISELED_DEEPSLATE": "Common",
+        "REINFORCED_DEEPSLATE": "Common",
+        "IRON_BARS": "Common",
+        "CHAIN": "Common",
+        "GLASS_PANE": "Common",
+        "MELON": "Uncommon",
+        "VINE": "Common",
+        "GLOW_LICHEN": "Common",
+        "BRICK_STAIRS": "Common",
+        "STONE_BRICK_STAIRS": "Common",
+        "MUD_BRICK_STAIRS": "Common",
+        "LILY_PAD": "Uncommon",
+        "ENCHANTING_TABLE": "Rare",
+        "SANDSTONE_STAIRS": "Common",
+        "EMERALD_BLOCK": "Uncommon",
+        "OAK_STAIRS": "Very Common",
+        "SPRUCE_STAIRS": "Very Common",
+        "BIRCH_STAIRS": "Very Common",
+        "JUNGLE_STAIRS": "Very Common",
+        "ACACIA_STAIRS": "Very Common",
+        "CHERRY_STAIRS": "Common",
+        "DARK_OAK_STAIRS": "Very Common",
+        "MANGROVE_STAIRS": "Common",
+        "BAMBOO_STAIRS": "Common",
+        "BAMBOO_MOSAIC_STAIRS": "Common",
+        "COBBLESTONE_WALL": "Common",
+        "MOSSY_COBBLESTONE_WALL": "Uncommon",
+        "BRICK_WALL": "Common",
+        "PRISMARINE_WALL": "Rare",
+        "RED_SANDSTONE_WALL": "Uncommon",
+        "MOSSY_STONE_BRICK_WALL": "Uncommon",
+        "GRANITE_WALL": "Very Common",
+        "STONE_BRICK_WALL": "Common",
+        "MUD_BRICK_WALL": "Common",
+        "ANDESITE_WALL": "Very Common",
+        "SANDSTONE_WALL": "Very Common",
+        "DIORITE_WALL": "Very Common",
+        "COBBLED_DEEPSLATE_WALL": "Common",
+        "POLISHED_DEEPSLATE_WALL": "Common",
+        "DEEPSLATE_BRICK_WALL": "Common",
+        "DEEPSLATE_TILE_WALL": "Common",
+        "ANVIL": "Uncommon",
+        "HAY_BLOCK": "Uncommon",
+        "WHITE_CARPET": "Very Common",
+        "ORANGE_CARPET": "Very Common",
+        "MAGENTA_CARPET": "Very Common",
+        "LIGHT_BLUE_CARPET": "Very Common",
+        "YELLOW_CARPET": "Very Common",
+        "LIME_CARPET": "Very Common",
+        "PINK_CARPET": "Very Common",
+        "GRAY_CARPET": "Very Common",
+        "LIGHT_GRAY_CARPET": "Very Common",
+        "CYAN_CARPET": "Very Common",
+        "PURPLE_CARPET": "Very Common",
+        "BLUE_CARPET": "Very Common",
+        "BROWN_CARPET": "Very Common",
+        "GREEN_CARPET": "Very Common",
+        "RED_CARPET": "Very Common",
+        "BLACK_CARPET": "Very Common",
+        "PACKED_ICE": "Rare",
+        "SUNFLOWER": "Uncommon",
+        "LILAC": "Common",
+        "ROSE_BUSH": "Common",
+        "PEONY": "Common",
+        "TALL_GRASS": "Super Rare",
+        "LARGE_FERN": "Super Rare",
+        "WHITE_STAINED_GLASS": "Common",
+        "ORANGE_STAINED_GLASS": "Common",
+        "MAGENTA_STAINED_GLASS": "Common",
+        "LIGHT_BLUE_STAINED_GLASS": "Common",
+        "YELLOW_STAINED_GLASS": "Common",
+        "LIME_STAINED_GLASS": "Common",
+        "PINK_STAINED_GLASS": "Common",
+        "GRAY_STAINED_GLASS": "Common",
+        "LIGHT_GRAY_STAINED_GLASS": "Common",
+        "CYAN_STAINED_GLASS": "Common",
+        "PURPLE_STAINED_GLASS": "Common",
+        "BLUE_STAINED_GLASS": "Common",
+        "BROWN_STAINED_GLASS": "Common",
+        "GREEN_STAINED_GLASS": "Common",
+        "RED_STAINED_GLASS": "Common",
+        "BLACK_STAINED_GLASS": "Common",
+        "WHITE_STAINED_GLASS_PANE": "Common",
+        "ORANGE_STAINED_GLASS_PANE": "Common",
+        "MAGENTA_STAINED_GLASS_PANE": "Common",
+        "LIGHT_BLUE_STAINED_GLASS_PANE": "Common",
+        "YELLOW_STAINED_GLASS_PANE": "Common",
+        "LIME_STAINED_GLASS_PANE": "Common",
+        "PINK_STAINED_GLASS_PANE": "Common",
+        "GRAY_STAINED_GLASS_PANE": "Common",
+        "LIGHT_GRAY_STAINED_GLASS_PANE": "Common",
+        "CYAN_STAINED_GLASS_PANE": "Common",
+        "PURPLE_STAINED_GLASS_PANE": "Common",
+        "BLUE_STAINED_GLASS_PANE": "Common",
+        "BROWN_STAINED_GLASS_PANE": "Common",
+        "GREEN_STAINED_GLASS_PANE": "Common",
+        "RED_STAINED_GLASS_PANE": "Common",
+        "BLACK_STAINED_GLASS_PANE": "Common",
+        "PRISMARINE": "Rare",
+        "PRISMARINE_BRICKS": "Rare",
+        "DARK_PRISMARINE": "Rare",
+        "PRISMARINE_STAIRS": "Rare",
+        "PRISMARINE_BRICK_STAIRS": "Rare",
+        "DARK_PRISMARINE_STAIRS": "Rare",
+        "SEA_LANTERN": "Rare",
+        "RED_SANDSTONE": "Uncommon",
+        "CHISELED_RED_SANDSTONE": "Uncommon",
+        "CUT_RED_SANDSTONE": "Uncommon",
+        "RED_SANDSTONE_STAIRS": "Uncommon",
+        "MAGMA_BLOCK": "Uncommon",
+        "WHITE_CONCRETE": "Common",
+        "ORANGE_CONCRETE": "Common",
+        "MAGENTA_CONCRETE": "Common",
+        "LIGHT_BLUE_CONCRETE": "Common",
+        "YELLOW_CONCRETE": "Common",
+        "LIME_CONCRETE": "Common",
+        "PINK_CONCRETE": "Common",
+        "GRAY_CONCRETE": "Common",
+        "LIGHT_GRAY_CONCRETE": "Common",
+        "CYAN_CONCRETE": "Common",
+        "PURPLE_CONCRETE": "Common",
+        "BLUE_CONCRETE": "Common",
+        "BROWN_CONCRETE": "Common",
+        "GREEN_CONCRETE": "Common",
+        "RED_CONCRETE": "Common",
+        "BLACK_CONCRETE": "Common",
+        "WHITE_CONCRETE_POWDER": "Common",
+        "ORANGE_CONCRETE_POWDER": "Common",
+        "MAGENTA_CONCRETE_POWDER": "Common",
+        "LIGHT_BLUE_CONCRETE_POWDER": "Common",
+        "YELLOW_CONCRETE_POWDER": "Common",
+        "LIME_CONCRETE_POWDER": "Common",
+        "PINK_CONCRETE_POWDER": "Common",
+        "GRAY_CONCRETE_POWDER": "Common",
+        "LIGHT_GRAY_CONCRETE_POWDER": "Common",
+        "CYAN_CONCRETE_POWDER": "Common",
+        "PURPLE_CONCRETE_POWDER": "Common",
+        "BLUE_CONCRETE_POWDER": "Common",
+        "BROWN_CONCRETE_POWDER": "Common",
+        "GREEN_CONCRETE_POWDER": "Common",
+        "RED_CONCRETE_POWDER": "Common",
+        "BLACK_CONCRETE_POWDER": "Common",
+        "CONDUIT": "Super Rare",
+        "POLISHED_GRANITE_STAIRS": "Very Common",
+        "SMOOTH_RED_SANDSTONE_STAIRS": "Uncommon",
+        "MOSSY_STONE_BRICK_STAIRS": "Uncommon",
+        "POLISHED_DIORITE_STAIRS": "Very Common",
+        "MOSSY_COBBLESTONE_STAIRS": "Uncommon",
+        "STONE_STAIRS": "Very Common",
+        "SMOOTH_SANDSTONE_STAIRS": "Common",
+        "GRANITE_STAIRS": "Very Common",
+        "ANDESITE_STAIRS": "Very Common",
+        "POLISHED_ANDESITE_STAIRS": "Very Common",
+        "DIORITE_STAIRS": "Very Common",
+        "COBBLED_DEEPSLATE_STAIRS": "Common",
+        "POLISHED_DEEPSLATE_STAIRS": "Common",
+        "DEEPSLATE_BRICK_STAIRS": "Common",
+        "DEEPSLATE_TILE_STAIRS": "Common",
+        "POLISHED_GRANITE_SLAB": "Very Common",
+        "SMOOTH_RED_SANDSTONE_SLAB": "Uncommon",
+        "MOSSY_STONE_BRICK_SLAB": "Uncommon",
+        "POLISHED_DIORITE_SLAB": "Very Common",
+        "MOSSY_COBBLESTONE_SLAB": "Uncommon",
+        "SMOOTH_SANDSTONE_SLAB": "Common",
+        "GRANITE_SLAB": "Very Common",
+        "ANDESITE_SLAB": "Very Common",
+        "POLISHED_ANDESITE_SLAB": "Very Common",
+        "DIORITE_SLAB": "Very Common",
+        "COBBLED_DEEPSLATE_SLAB": "Common",
+        "POLISHED_DEEPSLATE_SLAB": "Common",
+        "DEEPSLATE_BRICK_SLAB": "Common",
+        "DEEPSLATE_TILE_SLAB": "Common",
+        "SCAFFOLDING": "Uncommon",
+        "REDSTONE": "Common",
+        "REDSTONE_TORCH": "Common",
+        "REDSTONE_BLOCK": "Uncommon",
+        "REPEATER": "Uncommon",
+        "COMPARATOR": "Rare",
+        "PISTON": "Common",
+        "STICKY_PISTON": "Rare",
+        "SLIME_BLOCK": "Rare",
+        "HONEY_BLOCK": "Rare",
+        "OBSERVER": "Rare",
+        "HOPPER": "Common",
+        "DISPENSER": "Uncommon",
+        "DROPPER": "Common",
+        "LECTERN": "Common",
+        "TARGET": "Uncommon",
+        "LEVER": "Very Common",
+        "DAYLIGHT_DETECTOR": "Rare",
+        "TRIPWIRE_HOOK": "Common",
+        "TRAPPED_CHEST": "Common",
+        "TNT": "Uncommon",
+        "NOTE_BLOCK": "Common",
+        "STONE_BUTTON": "Very Common",
+        "OAK_BUTTON": "Very Common",
+        "SPRUCE_BUTTON": "Very Common",
+        "BIRCH_BUTTON": "Very Common",
+        "JUNGLE_BUTTON": "Very Common",
+        "ACACIA_BUTTON": "Very Common",
+        "CHERRY_BUTTON": "Common",
+        "DARK_OAK_BUTTON": "Very Common",
+        "MANGROVE_BUTTON": "Common",
+        "BAMBOO_BUTTON": "Common",
+        "STONE_PRESSURE_PLATE": "Very Common",
+        "LIGHT_WEIGHTED_PRESSURE_PLATE": "Common",
+        "HEAVY_WEIGHTED_PRESSURE_PLATE": "Common",
+        "OAK_PRESSURE_PLATE": "Very Common",
+        "SPRUCE_PRESSURE_PLATE": "Very Common",
+        "BIRCH_PRESSURE_PLATE": "Very Common",
+        "JUNGLE_PRESSURE_PLATE": "Very Common",
+        "ACACIA_PRESSURE_PLATE": "Very Common",
+        "CHERRY_PRESSURE_PLATE": "Common",
+        "DARK_OAK_PRESSURE_PLATE": "Very Common",
+        "MANGROVE_PRESSURE_PLATE": "Common",
+        "BAMBOO_PRESSURE_PLATE": "Common",
+        "IRON_DOOR": "Common",
+        "OAK_DOOR": "Very Common",
+        "SPRUCE_DOOR": "Very Common",
+        "BIRCH_DOOR": "Very Common",
+        "JUNGLE_DOOR": "Very Common",
+        "ACACIA_DOOR": "Very Common",
+        "CHERRY_DOOR": "Common",
+        "DARK_OAK_DOOR": "Very Common",
+        "MANGROVE_DOOR": "Common",
+        "BAMBOO_DOOR": "Common",
+        "COPPER_DOOR": "Common",
+        "EXPOSED_COPPER_DOOR": "Rare",
+        "WEATHERED_COPPER_DOOR": "Super Rare",
+        "OXIDIZED_COPPER_DOOR": "Super Rare",
+        "WAXED_COPPER_DOOR": "Super Rare",
+        "WAXED_EXPOSED_COPPER_DOOR": "Super Rare",
+        "WAXED_WEATHERED_COPPER_DOOR": "Super Rare",
+        "WAXED_OXIDIZED_COPPER_DOOR": "Super Rare",
+        "IRON_TRAPDOOR": "Common",
+        "OAK_TRAPDOOR": "Very Common",
+        "SPRUCE_TRAPDOOR": "Very Common",
+        "BIRCH_TRAPDOOR": "Very Common",
+        "JUNGLE_TRAPDOOR": "Very Common",
+        "ACACIA_TRAPDOOR": "Very Common",
+        "CHERRY_TRAPDOOR": "Common",
+        "DARK_OAK_TRAPDOOR": "Very Common",
+        "MANGROVE_TRAPDOOR": "Common",
+        "BAMBOO_TRAPDOOR": "Common",
+        "COPPER_TRAPDOOR": "Uncommon",
+        "EXPOSED_COPPER_TRAPDOOR": "Rare",
+        "WEATHERED_COPPER_TRAPDOOR": "Super Rare",
+        "OXIDIZED_COPPER_TRAPDOOR": "Super Rare",
+        "WAXED_COPPER_TRAPDOOR": "Super Rare",
+        "WAXED_EXPOSED_COPPER_TRAPDOOR": "Super Rare",
+        "WAXED_WEATHERED_COPPER_TRAPDOOR": "Super Rare",
+        "WAXED_OXIDIZED_COPPER_TRAPDOOR": "Super Rare",
+        "OAK_FENCE_GATE": "Very Common",
+        "SPRUCE_FENCE_GATE": "Very Common",
+        "BIRCH_FENCE_GATE": "Very Common",
+        "JUNGLE_FENCE_GATE": "Very Common",
+        "ACACIA_FENCE_GATE": "Very Common",
+        "CHERRY_FENCE_GATE": "Common",
+        "DARK_OAK_FENCE_GATE": "Very Common",
+        "MANGROVE_FENCE_GATE": "Common",
+        "BAMBOO_FENCE_GATE": "Very Common",
+        "POWERED_RAIL": "Uncommon",
+        "DETECTOR_RAIL": "Uncommon",
+        "RAIL": "Common",
+        "ACTIVATOR_RAIL": "Uncommon",
+        "SADDLE": "Rare",
+        "MINECART": "Common",
+        "CHEST_MINECART": "Common",
+        "FURNACE_MINECART": "Common",
+        "TNT_MINECART": "Rare",
+        "HOPPER_MINECART": "Common",
+        "CARROT_ON_A_STICK": "Uncommon",
+        "OAK_BOAT": "Very Common",
+        "OAK_CHEST_BOAT": "Very Common",
+        "SPRUCE_BOAT": "Very Common",
+        "SPRUCE_CHEST_BOAT": "Very Common",
+        "BIRCH_BOAT": "Very Common",
+        "BIRCH_CHEST_BOAT": "Very Common",
+        "JUNGLE_BOAT": "Very Common",
+        "JUNGLE_CHEST_BOAT": "Very Common",
+        "ACACIA_BOAT": "Very Common",
+        "ACACIA_CHEST_BOAT": "Very Common",
+        "CHERRY_BOAT": "Common",
+        "CHERRY_CHEST_BOAT": "Common",
+        "DARK_OAK_BOAT": "Very Common",
+        "DARK_OAK_CHEST_BOAT": "Very Common",
+        "MANGROVE_BOAT": "Common",
+        "MANGROVE_CHEST_BOAT": "Common",
+        "BAMBOO_RAFT": "Common",
+        "BAMBOO_CHEST_RAFT": "Common",
+        "TURTLE_HELMET": "Rare",
+        "FLINT_AND_STEEL": "Common",
+        "APPLE": "Common",
+        "BOW": "Uncommon",
+        "ARROW": "Very Common",
+        "COAL": "Very Common",
+        "CHARCOAL": "Very Common",
+        "DIAMOND": "Uncommon",
+        "EMERALD": "Uncommon",
+        "LAPIS_LAZULI": "Common",
+        "AMETHYST_SHARD": "Rare",
+        "RAW_IRON": "Common",
+        "IRON_INGOT": "Common",
+        "RAW_COPPER": "Common",
+        "COPPER_INGOT": "Common",
+        "RAW_GOLD": "Common",
+        "GOLD_INGOT": "Common",
+        "WOODEN_SWORD": "Very Common",
+        "WOODEN_SHOVEL": "Very Common",
+        "WOODEN_PICKAXE": "Very Common",
+        "WOODEN_AXE": "Very Common",
+        "WOODEN_HOE": "Very Common",
+        "STONE_SWORD": "Very Common",
+        "STONE_SHOVEL": "Very Common",
+        "STONE_PICKAXE": "Very Common",
+        "STONE_AXE": "Very Common",
+        "STONE_HOE": "Very Common",
+        "GOLDEN_SWORD": "Common",
+        "GOLDEN_SHOVEL": "Common",
+        "GOLDEN_PICKAXE": "Common",
+        "GOLDEN_AXE": "Common",
+        "GOLDEN_HOE": "Common",
+        "IRON_SWORD": "Common",
+        "IRON_SHOVEL": "Common",
+        "IRON_PICKAXE": "Common",
+        "IRON_AXE": "Common",
+        "IRON_HOE": "Common",
+        "DIAMOND_SWORD": "Uncommon",
+        "DIAMOND_SHOVEL": "Uncommon",
+        "DIAMOND_PICKAXE": "Uncommon",
+        "DIAMOND_AXE": "Uncommon",
+        "DIAMOND_HOE": "Uncommon",
+        "STICK": "Very Common",
+        "BOWL": "Very Common",
+        "STRING": "Common",
+        "FEATHER": "Very Common",
+        "GUNPOWDER": "Common",
+        "WHEAT_SEEDS": "Very Common",
+        "WHEAT": "Common",
+        "BREAD": "Common",
+        "LEATHER_HELMET": "Very Common",
+        "LEATHER_CHESTPLATE": "Very Common",
+        "LEATHER_LEGGINGS": "Very Common",
+        "LEATHER_BOOTS": "Very Common",
+        "CHAINMAIL_HELMET": "Rare",
+        "CHAINMAIL_CHESTPLATE": "Rare",
+        "CHAINMAIL_LEGGINGS": "Rare",
+        "CHAINMAIL_BOOTS": "Rare",
+        "IRON_HELMET": "Common",
+        "IRON_CHESTPLATE": "Common",
+        "IRON_LEGGINGS": "Common",
+        "IRON_BOOTS": "Common",
+        "DIAMOND_HELMET": "Uncommon",
+        "DIAMOND_CHESTPLATE": "Uncommon",
+        "DIAMOND_LEGGINGS": "Uncommon",
+        "DIAMOND_BOOTS": "Uncommon",
+        "GOLDEN_HELMET": "Common",
+        "GOLDEN_CHESTPLATE": "Common",
+        "GOLDEN_LEGGINGS": "Common",
+        "GOLDEN_BOOTS": "Common",
+        "FLINT": "Very Common",
+        "PORKCHOP": "Very Common",
+        "COOKED_PORKCHOP": "Very Common",
+        "PAINTING": "Very Common",
+        "GOLDEN_APPLE": "Uncommon",
+        "ENCHANTED_GOLDEN_APPLE": "Rare",
+        "OAK_SIGN": "Very Common",
+        "SPRUCE_SIGN": "Very Common",
+        "BIRCH_SIGN": "Very Common",
+        "JUNGLE_SIGN": "Very Common",
+        "ACACIA_SIGN": "Very Common",
+        "CHERRY_SIGN": "Common",
+        "DARK_OAK_SIGN": "Very Common",
+        "MANGROVE_SIGN": "Common",
+        "BAMBOO_SIGN": "Common",
+        "OAK_HANGING_SIGN": "Common",
+        "SPRUCE_HANGING_SIGN": "Common",
+        "BIRCH_HANGING_SIGN": "Common",
+        "JUNGLE_HANGING_SIGN": "Common",
+        "ACACIA_HANGING_SIGN": "Common",
+        "CHERRY_HANGING_SIGN": "Uncommon",
+        "DARK_OAK_HANGING_SIGN": "Very Common",
+        "MANGROVE_HANGING_SIGN": "Uncommon",
+        "BAMBOO_HANGING_SIGN": "Uncommon",
+        "BUCKET": "Common",
+        "WATER_BUCKET": "Common",
+        "LAVA_BUCKET": "Common",
+        "POWDER_SNOW_BUCKET": "Uncommon",
+        "SNOWBALL": "Common",
+        "LEATHER": "Very Common",
+        "MILK_BUCKET": "Common",
+        "PUFFERFISH_BUCKET": "Uncommon",
+        "SALMON_BUCKET": "Uncommon",
+        "COD_BUCKET": "Uncommon",
+        "TROPICAL_FISH_BUCKET": "Uncommon",
+        "AXOLOTL_BUCKET": "Rare",
+        "TADPOLE_BUCKET": "Super Rare",
+        "BRICK": "Common",
+        "CLAY_BALL": "Very Common",
+        "DRIED_KELP_BLOCK": "Common",
+        "PAPER": "Very Common",
+        "BOOK": "Very Common",
+        "SLIME_BALL": "Rare",
+        "EGG": "Uncommon",
+        "COMPASS": "Common",
+        "FISHING_ROD": "Uncommon",
+        "CLOCK": "Common",
+        "SPYGLASS": "Rare",
+        "GLOWSTONE_DUST": "Uncommon",
+        "COD": "Very Common",
+        "SALMON": "Very Common",
+        "TROPICAL_FISH": "Uncommon",
+        "PUFFERFISH": "Uncommon",
+        "COOKED_COD": "Very Common",
+        "COOKED_SALMON": "Very Common",
+        "INK_SAC": "Very Common",
+        "GLOW_INK_SAC": "Common",
+        "COCOA_BEANS": "Uncommon",
+        "WHITE_DYE": "Very Common",
+        "ORANGE_DYE": "Very Common",
+        "MAGENTA_DYE": "Very Common",
+        "LIGHT_BLUE_DYE": "Very Common",
+        "YELLOW_DYE": "Very Common",
+        "LIME_DYE": "Very Common",
+        "PINK_DYE": "Very Common",
+        "GRAY_DYE": "Very Common",
+        "LIGHT_GRAY_DYE": "Very Common",
+        "CYAN_DYE": "Very Common",
+        "PURPLE_DYE": "Very Common",
+        "BLUE_DYE": "Very Common",
+        "BROWN_DYE": "Very Common",
+        "GREEN_DYE": "Very Common",
+        "RED_DYE": "Very Common",
+        "BLACK_DYE": "Very Common",
+        "BONE_MEAL": "Common",
+        "BONE": "Common",
+        "SUGAR": "Very Common",
+        "CAKE": "Rare",
+        "WHITE_BED": "Very Common",
+        "ORANGE_BED": "Very Common",
+        "MAGENTA_BED": "Very Common",
+        "LIGHT_BLUE_BED": "Very Common",
+        "YELLOW_BED": "Very Common",
+        "LIME_BED": "Very Common",
+        "PINK_BED": "Very Common",
+        "GRAY_BED": "Very Common",
+        "LIGHT_GRAY_BED": "Very Common",
+        "CYAN_BED": "Very Common",
+        "PURPLE_BED": "Very Common",
+        "BLUE_BED": "Very Common",
+        "BROWN_BED": "Very Common",
+        "GREEN_BED": "Very Common",
+        "RED_BED": "Very Common",
+        "BLACK_BED": "Very Common",
+        "COOKIE": "Uncommon",
+        "SHEARS": "Common",
+        "MELON_SLICE": "Uncommon",
+        "DRIED_KELP": "Very Common",
+        "PUMPKIN_SEEDS": "Uncommon",
+        "MELON_SEEDS": "Uncommon",
+        "BEEF": "Very Common",
+        "COOKED_BEEF": "Very Common",
+        "CHICKEN": "Very Common",
+        "COOKED_CHICKEN": "Very Common",
+        "ROTTEN_FLESH": "Common",
+        "ENDER_PEARL": "Uncommon",
+        "GOLD_NUGGET": "Common",
+        "GLASS_BOTTLE": "Very Common",
+        "SPIDER_EYE": "Uncommon",
+        "FERMENTED_SPIDER_EYE": "Rare",
+        "BREWING_STAND": "Rare",
+        "CAULDRON": "Common",
+        "GLISTERING_MELON_SLICE": "Uncommon",
+        "EXPERIENCE_BOTTLE": "Rare",
+        "FIRE_CHARGE": "Rare",
+        "WRITABLE_BOOK": "Common",
+        "ITEM_FRAME": "Very Common",
+        "GLOW_ITEM_FRAME": "Common",
+        "FLOWER_POT": "Very Common",
+        "CARROT": "Uncommon",
+        "POTATO": "Uncommon",
+        "BAKED_POTATO": "Uncommon",
+        "POISONOUS_POTATO": "Rare",
+        "GOLDEN_CARROT": "Uncommon",
+        "PUMPKIN_PIE": "Uncommon",
+        "FIREWORK_ROCKET": "Uncommon",
+        "PRISMARINE_SHARD": "Rare",
+        "PRISMARINE_CRYSTALS": "Rare",
+        "RABBIT": "Uncommon",
+        "COOKED_RABBIT": "Uncommon",
+        "RABBIT_STEW": "Uncommon",
+        "RABBIT_FOOT": "Rare",
+        "RABBIT_HIDE": "Uncommon",
+        "ARMOR_STAND": "Common",
+        "NAME_TAG": "Rare",
+        "MUTTON": "Very Common",
+        "COOKED_MUTTON": "Very Common",
+        "BEETROOT": "Uncommon",
+        "BEETROOT_SEEDS": "Uncommon",
+        "BEETROOT_SOUP": "Uncommon",
+        "SPLASH_POTION": "Rare",
+        "SHIELD": "Common",
+        "IRON_NUGGET": "Common",
+        "TRIDENT": "Super Rare",
+        "NAUTILUS_SHELL": "Rare",
+        "HEART_OF_THE_SEA": "Super Rare",
+        "CROSSBOW": "Uncommon",
+        "SUSPICIOUS_STEW": "Uncommon",
+        "LOOM": "Common",
+        "COMPOSTER": "Very Common",
+        "BARREL": "Very Common",
+        "SMOKER": "Common",
+        "BLAST_FURNACE": "Common",
+        "CARTOGRAPHY_TABLE": "Common",
+        "FLETCHING_TABLE": "Common",
+        "GRINDSTONE": "Common",
+        "SMITHING_TABLE": "Common",
+        "STONECUTTER": "Common",
+        "BELL": "Rare",
+        "LANTERN": "Common",
+        "SWEET_BERRIES": "Uncommon",
+        "GLOW_BERRIES": "Uncommon",
+        "CAMPFIRE": "Common",
+        "HONEYCOMB": "Uncommon",
+        "BEEHIVE": "Rare",
+        "HONEY_BOTTLE": "Uncommon",
+        "HONEYCOMB_BLOCK": "Rare",
+        "CRYING_OBSIDIAN": "Rare",
+        "CANDLE": "Rare",
+        "WHITE_CANDLE": "Rare",
+        "ORANGE_CANDLE": "Rare",
+        "MAGENTA_CANDLE": "Rare",
+        "LIGHT_BLUE_CANDLE": "Rare",
+        "YELLOW_CANDLE": "Rare",
+        "LIME_CANDLE": "Rare",
+        "PINK_CANDLE": "Rare",
+        "GRAY_CANDLE": "Rare",
+        "LIGHT_GRAY_CANDLE": "Rare",
+        "CYAN_CANDLE": "Rare",
+        "PURPLE_CANDLE": "Rare",
+        "BLUE_CANDLE": "Rare",
+        "BROWN_CANDLE": "Rare",
+        "GREEN_CANDLE": "Rare",
+        "RED_CANDLE": "Rare",
+        "BLACK_CANDLE": "Rare",
+        "POINTED_DRIPSTONE": "Uncommon",
+        "BRUSH": "Common",
+        "COPPER_GRATE": "Common",
+        "EXPOSED_COPPER_GRATE": "Rare",
+        "WEATHERED_COPPER_GRATE": "Super Rare",
+        "OXIDIZED_COPPER_GRATE": "Super Rare",
+        "WAXED_COPPER_GRATE": "Rare",
+        "WAXED_EXPOSED_COPPER_GRATE": "Super Rare",
+        "WAXED_WEATHERED_COPPER_GRATE": "Super Rare",
+        "WAXED_OXIDIZED_COPPER_GRATE": "Super Rare",
+        "WHITE_TERRACOTTA": "Common",
+        "ORANGE_TERRACOTTA": "Common",
+        "MAGENTA_TERRACOTTA": "Common",
+        "LIGHT_BLUE_TERRACOTTA": "Common",
+        "YELLOW_TERRACOTTA": "Common",
+        "LIME_TERRACOTTA": "Common",
+        "PINK_TERRACOTTA": "Common",
+        "GRAY_TERRACOTTA": "Common",
+        "LIGHT_GRAY_TERRACOTTA": "Common",
+        "CYAN_TERRACOTTA": "Common",
+        "PURPLE_TERRACOTTA": "Common",
+        "BLUE_TERRACOTTA": "Common",
+        "BROWN_TERRACOTTA": "Common",
+        "GREEN_TERRACOTTA": "Common",
+        "RED_TERRACOTTA": "Common",
+        "BLACK_TERRACOTTA": "Common",
+        "NETHERITE_BLOCK": "Super Rare",
+        "CRIMSON_PLANKS": "Uncommon",
+        "WARPED_PLANKS": "Uncommon",
+        "CRIMSON_STEM": "Uncommon",
+        "WARPED_STEM": "Uncommon",
+        "STRIPPED_CRIMSON_STEM": "Uncommon",
+        "STRIPPED_WARPED_STEM": "Uncommon",
+        "NETHER_GOLD_ORE": "Rare",
+        "NETHER_QUARTZ_ORE": "Rare",
+        "CRIMSON_FUNGUS": "Uncommon",
+        "WARPED_FUNGUS": "Uncommon",
+        "CRIMSON_ROOTS": "Uncommon",
+        "WARPED_ROOTS": "Uncommon",
+        "NETHER_SPROUTS": "Uncommon",
+        "CRIMSON_SLAB": "Uncommon",
+        "WARPED_SLAB": "Uncommon",
+        "SMOOTH_QUARTZ": "Uncommon",
+        "NETHERRACK": "Uncommon",
+        "SOUL_SAND": "Uncommon",
+        "GLOWSTONE": "Uncommon",
+        "NETHER_BRICKS": "Uncommon",
+        "CRACKED_NETHER_BRICKS": "Uncommon",
+        "CHISELED_NETHER_BRICKS": "Uncommon",
+        "NETHER_BRICK_FENCE": "Uncommon",
+        "NETHER_BRICK_STAIRS": "Uncommon",
+        "CRIMSON_STAIRS": "Uncommon",
+        "WARPED_STAIRS": "Uncommon",
+        "NETHER_BRICK_WALL": "Uncommon",
+        "CHISELED_QUARTZ_BLOCK": "Uncommon",
+        "QUARTZ_BLOCK": "Uncommon",
+        "QUARTZ_BRICKS": "Uncommon",
+        "QUARTZ_PILLAR": "Uncommon",
+        "QUARTZ_STAIRS": "Uncommon",
+        "NETHER_WART_BLOCK": "Rare",
+        "WARPED_WART_BLOCK": "Rare",
+        "RED_NETHER_BRICKS": "Rare",
+        "BONE_BLOCK": "Uncommon",
+        "SMOOTH_QUARTZ_STAIRS": "Uncommon",
+        "CRIMSON_DOOR": "Uncommon",
+        "WARPED_DOOR": "Uncommon",
+        "CRIMSON_TRAPDOOR": "Uncommon",
+        "WARPED_TRAPDOOR": "Uncommon",
+        "NETHERITE_INGOT": "Super Rare",
+        "NETHERITE_SCRAP": "Super Rare",
+        "QUARTZ": "Uncommon",
+        "NETHERITE_SWORD": "Super Rare",
+        "NETHERITE_SHOVEL": "Super Rare",
+        "NETHERITE_PICKAXE": "Super Rare",
+        "NETHERITE_AXE": "Super Rare",
+        "NETHERITE_HOE": "Super Rare",
+        "NETHERITE_HELMET": "Super Rare",
+        "NETHERITE_CHESTPLATE": "Super Rare",
+        "NETHERITE_LEGGINGS": "Super Rare",
+        "NETHERITE_BOOTS": "Super Rare",
+        "BLAZE_ROD": "Rare",
+        "GHAST_TEAR": "Rare",
+        "NETHER_WART": "Rare",
+        "BLAZE_POWDER": "Rare",
+        "MAGMA_CREAM": "Rare",
+        "BASALT": "Uncommon",
+        "SMOOTH_BASALT": "Uncommon",
+        "POLISHED_BASALT": "Uncommon",
+        "BLACKSTONE": "Uncommon",
+        "POLISHED_BLACKSTONE": "Uncommon",
+        "END_STONE": "Super Rare",
+        "END_STONE_BRICKS": "Super Rare",
+        "CHORUS_FRUIT": "Super Rare",
+        "PURPUR_BLOCK": "Super Rare",
+        "PURPUR_PILLAR": "Super Rare",
+        "DRAGON_HEAD": "Super Rare",
+        "DRAGON_EGG": "Super Rare",
+        "ELYTRA": "Super Rare",
+        "REDSTONE_LAMP": "Common",
+        "LIGHTNING_ROD": "Common"
+      };
+
+      // Working rarity mapping: start with defaults.
+      let workingRarityMapping = {};
+      fullItemsArray.forEach(item => {
+        workingRarityMapping[item] = defaultRarityMapping[item] || "Common";
+      });
+
+      /********** MODIFIER SETTINGS **********/
+      // Define modifier options – note the addition of "Random Teams"
+      const modOptions = {
+        "Difficulty": ["Easy", "Normal", "Hard"],
+        "Full Card": ["Yes", "No", "Lockout"],
+        "Hardcore": ["Yes", "No"],
+        "Random Teleport": ["Yes", "No"],
+        "PvP Enabled": ["Yes", "No"],
+        "Keep Inventory": ["Yes", "No"],
+        "Daylight Cycle": ["Yes", "No"],
+        "Mob Spawning": ["Yes", "No"],
+        "Tickspeed": ["1", "3", "5", "10"],
+        "Random Teams": ["Yes", "No"]
+      };
+
+      // Build the Modifier Settings UI inside the settings panel.
+      function buildModifierSettings() {
+        const container = document.getElementById("modifierSettingsList");
+        container.innerHTML = "";
+        for (let mod in modOptions) {
+          let row = document.createElement("div");
+          row.className = "modRow";
+          let label = document.createElement("label");
+          label.innerText = mod + ":";
+          let dropdown = document.createElement("select");
+          dropdown.id = "mod_" + mod.replace(/\s+/g, "");
+          // Options: "Yes" (randomise) or "No" (disabled)
+          let optYes = document.createElement("option");
+          optYes.value = "Yes";
+          optYes.textContent = "Yes";
+          let optNo = document.createElement("option");
+          optNo.value = "No";
+          optNo.textContent = "No";
+          dropdown.appendChild(optYes);
+          dropdown.appendChild(optNo);
+          // Default to Yes.
+          dropdown.value = "Yes";
+          row.appendChild(label);
+          row.appendChild(dropdown);
+          container.appendChild(row);
+        }
+      }
+
+      /********** EFFECTS SETTING **********/
+      // (We already have a dropdown "randomEffectsDropdown" in the settings panel.)
+      
+      /********** MODIFIER ROLLING FUNCTIONS **********/
+      // Roll a single modifier value
+      function rollSingleModifier(modName) {
+        let choices = modOptions[modName];
+        let roll = Math.floor(Math.random() * choices.length);
+        return choices[roll];
+      }
+      
+      // Roll only the modifiers that are enabled in the settings panel.
+      function rollModifiersEnabled() {
+        let results = {};
+        for (let mod in modOptions) {
+          let dropdown = document.getElementById("mod_" + mod.replace(/\s+/g, ""));
+          if (dropdown && dropdown.value === "Yes") {
+            results[mod] = rollSingleModifier(mod);
+          }
+        }
+        return results;
+      }
+      
+      // Animate the display of rolled modifiers (one by one)
+      function animateModifiers(mods) {
+        const displayDiv = document.getElementById("rolledModifiersDisplay");
+        displayDiv.innerHTML = "";
+        let keys = Object.keys(mods);
+        return new Promise(resolve => {
+          let i = 0;
+          function revealNext() {
+            if (i < keys.length) {
+              let p = document.createElement("p");
+              p.innerText = keys[i] + ": " + mods[keys[i]];
+              displayDiv.appendChild(p);
+              setTimeout(() => { i++; revealNext(); }, 300);
+            } else {
+              resolve();
+            }
+          }
+          if(keys.length > 0) revealNext();
+          else { displayDiv.innerText = "No modifiers rolled."; resolve(); }
+        });
+      }
+      
+      /********** EFFECT ROLLING FUNCTIONS **********/
+      const effectList = ["speed", "slow", "fast_digging", "slow_digging", "jump", "confusion", "damage_resistance", "fire_resistance", "water_breathing", "invisibility", "blindness", "night_vision", "hunger", "weakness", "poison", "wither", "glowing", "slow_falling", "darkness", "regeneration", "dolphins_grace"];
+      
+      function rollEffects() {
+        let results = [];
+        // Roll repeatedly with a 50% chance to add an effect.
+        while (Math.random() < 0.5) {
+          let effect = effectList[Math.floor(Math.random() * effectList.length)];
+          let level = Math.floor(Math.random() * 10) + 1;
+          results.push(effect + " " + level);
+        }
+        return results.length > 0 ? results : ["None"];
+      }
+      
+      function animateEffects(effects) {
+        const displayDiv = document.getElementById("rolledEffectsDisplay");
+        displayDiv.innerHTML = "";
+        return new Promise(resolve => {
+          let i = 0;
+          function revealNext() {
+            if (i < effects.length) {
+              let p = document.createElement("p");
+              p.innerText = effects[i];
+              displayDiv.appendChild(p);
+              setTimeout(() => { i++; revealNext(); }, 300);
+            } else {
+              resolve();
+            }
+          }
+          revealNext();
+        });
+      }
+      
+      /********** CARD GENERATION FUNCTIONS **********/
+      // Odds for rolling rarity category:
+      const fixedCategoryProbabilities = {
+        "Very Common": 0.50,
+        "Common": 0.30,
+        "Uncommon": 0.149,
+        "Rare": 0.05,
+        "Super Rare": 0.001
+      };
+      
+      function rollRarityCategory() {
+        let roll = Math.random();
+        let cumulative = 0;
+        for (let cat in fixedCategoryProbabilities) {
+          cumulative += fixedCategoryProbabilities[cat];
+          if (roll < cumulative) return cat;
+        }
+        return "Common";
+      }
+      
+      // Generate card array: For each cell, roll a rarity then pick one item from pool whose default rarity exactly matches.
+      function generateCardArray(size) {
+        let pool = fullItemsArray.slice();
+        let card = [];
+        let overallScore = 0;
+        for (let i = 0; i < size; i++) {
+          card[i] = [];
+          for (let j = 0; j < size; j++) {
+            let chosenCat = rollRarityCategory();
+            let available = pool.filter(item => defaultRarityMapping[item] === chosenCat);
+            let chosenItem;
+            if (available.length > 0) {
+              chosenItem = available[Math.floor(Math.random() * available.length)];
+            } else {
+              chosenItem = pool[Math.floor(Math.random() * pool.length)];
+              chosenCat = defaultRarityMapping[chosenItem] || "Common";
+            }
+            pool.splice(pool.indexOf(chosenItem), 1);
+            card[i][j] = { item: chosenItem, category: chosenCat };
+            overallScore += categoryMapping[chosenCat].score;
+          }
+        }
+        card[0][0]._overallScore = overallScore;
+        return card;
+      }
+      
+      function computeCardGrade(card, size) {
+        const maxScore = 5 * size * size;
+        const ratio = card[0][0]._overallScore / maxScore;
+        if (ratio >= 0.8) return "Legendary Card";
+        if (ratio >= 0.6) return "Epic Card";
+        if (ratio >= 0.4) return "Rare Card";
+        if (ratio >= 0.2) return "Common Card";
+        return "Very Common Card";
+      }
+      
+      function buildCardTable(card) {
+        let size = card.length;
+        let table = document.createElement("table");
+        table.style.tableLayout = "fixed";
+        for (let i = 0; i < size; i++) {
+          let tr = document.createElement("tr");
+          for (let j = 0; j < size; j++) {
+            let td = document.createElement("td");
+            td.innerText = "";
+            tr.appendChild(td);
+          }
+          table.appendChild(tr);
+        }
+        const bingoDiv = document.getElementById("bingoCard");
+        bingoDiv.innerHTML = "";
+        bingoDiv.appendChild(table);
+        return table;
+      }
+      
+      async function revealCardSequentially(card, table) {
+        let size = card.length;
+        let cells = table.getElementsByTagName("td");
+        let cellDelay = 500;
+        for (let i = 0; i < size; i++) {
+          for (let j = 0; j < size; j++) {
+            let cell = cells[i * size + j];
+            await revealCell(cell, card[i][j].item, card[i][j].category, cellDelay);
+          }
+        }
+      }
+      
+      function revealCell(cellElem, finalItem, rarityCategory, revealTime) {
+        return new Promise(resolve => {
+          let startTime = Date.now();
+          let interval = setInterval(() => {
+            if (Date.now() - startTime >= revealTime) {
+              clearInterval(interval);
+              cellElem.innerHTML = finalItem + "<br><span style='font-size:10px;'>" + rarityCategory + "</span>";
+              cellElem.style.backgroundColor = categoryMapping[rarityCategory].color;
+              cellElem.style.color = categoryMapping[rarityCategory].textColor;
+              try {
+                if (rarityCategory === "Super Rare") {
+                  document.getElementById("soundSuperRare").currentTime = 0;
+                  document.getElementById("soundSuperRare").play();
+                } else if (rarityCategory === "Rare") {
+                  document.getElementById("soundRare").currentTime = 0;
+                  document.getElementById("soundRare").play();
+                } else if (rarityCategory === "Uncommon") {
+                  document.getElementById("soundUncommon").currentTime = 0;
+                  document.getElementById("soundUncommon").play();
+                } else if (rarityCategory === "Common") {
+                  document.getElementById("soundCommon").currentTime = 0;
+                  document.getElementById("soundCommon").play();
+                } else if (rarityCategory === "Very Common") {
+                  document.getElementById("soundVeryCommon").currentTime = 0;
+                  document.getElementById("soundVeryCommon").play();
+                }
+              } catch(e) {
+                console.warn("Audio playback error:", e);
+              }
+              resolve();
+            } else {
+              cellElem.innerText = fullItemsArray[Math.floor(Math.random() * fullItemsArray.length)];
+            }
+          }, 50);
+        });
+      }
+      
+      async function animateSlotMachine(finalSize) {
+        return new Promise(resolve => {
+          let slotMachine = document.getElementById("slotMachine");
+          slotMachine.style.display = "block";
+          let reel1 = document.getElementById("reel1");
+          let reel2 = document.getElementById("reel2");
+          let reel3 = document.getElementById("reel3");
+          let sizes = [1,2,3,4,5,6,7,8,9,10];
+          let interval = setInterval(() => {
+            reel1.innerText = sizes[Math.floor(Math.random()*sizes.length)] + "×" + sizes[Math.floor(Math.random()*sizes.length)];
+            reel2.innerText = sizes[Math.floor(Math.random()*sizes.length)] + "×" + sizes[Math.floor(Math.random()*sizes.length)];
+            reel3.innerText = sizes[Math.floor(Math.random()*sizes.length)] + "×" + sizes[Math.floor(Math.random()*sizes.length)];
+          }, 100);
+          setTimeout(() => {
+            clearInterval(interval);
+            let display = finalSize + "×" + finalSize;
+            reel1.innerText = display;
+            reel2.innerText = display;
+            reel3.innerText = display;
+            try {
+              document.getElementById("spinSound").currentTime = 0;
+              document.getElementById("spinSound").play();
+            } catch(e) { console.warn("Spin sound error:", e); }
+            setTimeout(() => {
+              slotMachine.style.display = "none";
+              resolve(finalSize);
+            }, 500);
+          }, 2000);
+        });
+      }
+      
+     async function getCardSize() {
+  if (document.getElementById("randomCardSizeCheckbox").checked) {
+    // Define weighted sizes for 1×1 to 10×10.
+    const weightedSizes = [
+      { size: 1, weight: 1 },
+      { size: 2, weight: 2 },
+      { size: 3, weight: 4 },
+      { size: 4, weight: 8 },
+      { size: 5, weight: 20 },
+      { size: 6, weight: 8 },
+      { size: 7, weight: 4 },
+      { size: 8, weight: 2 },
+      { size: 9, weight: 1 },
+      { size: 10, weight: 0.5 }
+    ];
+    // Calculate total weight.
+    const totalWeight = weightedSizes.reduce((sum, s) => sum + s.weight, 0);
+    let roll = Math.random() * totalWeight;
+    let chosenSize;
+    for (let i = 0; i < weightedSizes.length; i++) {
+      roll -= weightedSizes[i].weight;
+      if (roll < 0) {
+        chosenSize = weightedSizes[i].size;
+        break;
+      }
+    }
+    // Optionally, animate the chosen size using your slot machine:
+    let finalSize = await animateSlotMachine(chosenSize);
+    return finalSize;
+  } else {
+    return parseInt(document.getElementById("manualSizeSelect").value);
+  }
+}
+
+      
+      /********** MAIN GENERATION FUNCTION **********/
+      async function main() {
+        document.getElementById("generateCardButton").disabled = true;
+        document.getElementById("gradeDisplay").innerText = "";
+        document.getElementById("cardSizeDisplay").innerText = "";
+        document.getElementById("bingoCard").innerHTML = "";
+        document.getElementById("rolledModifiersDisplay").innerHTML = "";
+        document.getElementById("rolledEffectsDisplay").innerHTML = "";
+        let size = await getCardSize();
+        document.getElementById("cardSizeDisplay").innerText = `Card Size: ${size}×${size}`;
+        let card = generateCardArray(size);
+        let table = buildCardTable(card);
+        await revealCardSequentially(card, table);
+        let grade = computeCardGrade(card, size);
+        document.getElementById("gradeDisplay").innerText = `Card Rarity Grade: ${grade}`;
+        
+        // Roll and animate modifiers if global toggle is Yes.
+        if (document.getElementById("globalModifierToggle").value === "Yes") {
+          let mods = rollModifiersEnabled();
+          await animateModifiers(mods);
+        } else {
+          document.getElementById("rolledModifiersDisplay").innerText = "Modifiers disabled";
+        }
+        
+        // Roll and animate effects if the effects dropdown is Yes.
+        if (document.getElementById("randomEffectsDropdown").value === "Yes") {
+          let effects = rollEffects();
+          await animateEffects(effects);
+        } else {
+          document.getElementById("rolledEffectsDisplay").innerText = "Effects: None";
+        }
+        
+        document.getElementById("generateCardButton").disabled = false;
+      }
+      
+      /********** RARITY EDITOR FUNCTIONS **********/
+      function buildRarityEditor() {
+        let list = document.getElementById("rarityList");
+        list.innerHTML = "";
+        fullItemsArray.forEach(item => {
+          let row = document.createElement("div");
+          row.className = "itemRow";
+          let label = document.createElement("label");
+          label.innerText = item;
+          let currentVal = workingRarityMapping[item];
+          let dropdown = document.createElement("select");
+          dropdown.className = "rarityDropdown";
+          dropdown.dataset.item = item;
+          for (let cat in categoryMapping) {
+            let opt = document.createElement("option");
+            opt.value = cat;
+            opt.textContent = cat;
+            if (cat === currentVal) { opt.selected = true; }
+            dropdown.appendChild(opt);
+          }
+          row.appendChild(label);
+          row.appendChild(dropdown);
+          list.appendChild(row);
+        });
+      }
+      
+      function saveRarities() {
+        document.querySelectorAll(".rarityDropdown").forEach(dropdown => {
+          let item = dropdown.dataset.item;
+          let chosenCat = dropdown.value;
+          workingRarityMapping[item] = chosenCat;
+          defaultRarityMapping[item] = chosenCat;
+        });
+        alert("Rarity values saved!");
+        console.log("Updated rarity mapping:", workingRarityMapping);
+      }
+      
+      /********** SETTINGS PANEL HANDLERS **********/
+      function toggleSettings() {
+        let panel = document.getElementById("settingsPanel");
+        panel.style.display = (panel.style.display === "none" || panel.style.display === "") ? "block" : "none";
+      }
+      function closeSettings() {
+        document.getElementById("settingsPanel").style.display = "none";
+      }
+      
+      /********** EVENT LISTENERS **********/
+      document.getElementById("settingsButton").addEventListener("click", toggleSettings);
+      document.getElementById("closeSettingsButton").addEventListener("click", closeSettings);
+      document.getElementById("generateCardButton").addEventListener("click", main);
+      document.getElementById("editRaritiesButton").addEventListener("click", buildRarityEditor);
+      document.getElementById("saveRaritiesButton").addEventListener("click", saveRarities);
+      document.getElementById("randomCardSizeCheckbox").addEventListener("change", function(){
+        if(this.checked){
+          document.getElementById("manualSizeSelect").style.display = "none";
+        } else {
+          document.getElementById("manualSizeSelect").style.display = "inline-block";
+        }
+      });
+      
+      // Build Modifier Settings UI on load
+      buildModifierSettings();
+      
+    }); // End DOMContentLoaded
+  <script>
+  (function() {
+    // Check for required functions/variables from your main code.
+    if (typeof rollRarityCategory !== "function" ||
+        typeof fullItemsArray === "undefined" ||
+        typeof defaultRarityMapping === "undefined" ||
+        typeof categoryMapping === "undefined") {
+      console.warn("Reroll functionality: Required functions/variables not found. Make sure the main code is loaded first.");
+      return;
+    }
+
+    // Function to reroll a single cell.
+    function rerollCell(cellElem) {
+      const revealTime = 500;
+      const startTime = Date.now();
+      // Roll for a new rarity category.
+      const newCategory = rollRarityCategory();
+      // Filter items that match the rolled rarity.
+      const available = fullItemsArray.filter(item => defaultRarityMapping[item] === newCategory);
+      const newItem = (available.length > 0)
+        ? available[Math.floor(Math.random() * available.length)]
+        : fullItemsArray[Math.floor(Math.random() * fullItemsArray.length)];
+
+      // Animate the cell similar to revealCell.
+      const interval = setInterval(() => {
+        if (Date.now() - startTime >= revealTime) {
+          clearInterval(interval);
+          cellElem.innerHTML = newItem + "<br><span style='font-size:10px;'>" + newCategory + "</span>";
+          cellElem.style.backgroundColor = categoryMapping[newCategory].color;
+          cellElem.style.color = categoryMapping[newCategory].textColor;
+          try {
+            if (newCategory === "Super Rare") {
+              document.getElementById("soundSuperRare").currentTime = 0;
+              document.getElementById("soundSuperRare").play();
+            } else if (newCategory === "Rare") {
+              document.getElementById("soundRare").currentTime = 0;
+              document.getElementById("soundRare").play();
+            } else if (newCategory === "Uncommon") {
+              document.getElementById("soundUncommon").currentTime = 0;
+              document.getElementById("soundUncommon").play();
+            } else if (newCategory === "Common") {
+              document.getElementById("soundCommon").currentTime = 0;
+              document.getElementById("soundCommon").play();
+            } else if (newCategory === "Very Common") {
+              document.getElementById("soundVeryCommon").currentTime = 0;
+              document.getElementById("soundVeryCommon").play();
+            }
+          } catch(e) {
+            console.warn("Audio playback error:", e);
+          }
+        } else {
+          // Display a random item name during the animation.
+          cellElem.innerText = fullItemsArray[Math.floor(Math.random() * fullItemsArray.length)];
+        }
+      }, 50);
+    }
+
+    // Listen for clicks on table cells within the bingo card.
+    document.addEventListener("click", function(e) {
+      const cell = e.target;
+      if (cell.tagName === "TD" && cell.closest("#bingoCard")) {
+        // Disable clicking on this cell until the reroll animation is done.
+        cell.style.pointerEvents = "none";
+        rerollCell(cell);
+        setTimeout(() => {
+          cell.style.pointerEvents = "auto";
+        }, 600);
+      }
+    });
+  })();
+</script>
+</body>
+</html>
